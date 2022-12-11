@@ -20,7 +20,7 @@ public class ClanCreateCommand extends ClanSubCommand {
     @Override
     public void run(ClanUser user, String[] args) {
         if (args.length != 2) {
-            // Send help.
+            sendHelp(user);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
@@ -50,7 +50,12 @@ public class ClanCreateCommand extends ClanSubCommand {
                         user.sendMessage("Es gibt bereits einen Clan mit diesem Tag");
                         return;
                     }
-                    ListenableFuture<Clan> createClan = clanSystem.getClanManager().createClan(clanSystem, user, clanName, clanTag);
+                    ListenableFuture<Clan> createClan = clanSystem.getClanManager().createClan(
+                            clanSystem,
+                            user,
+                            clanName,
+                            clanTag
+                    );
                     Callback.of(createClan, createdClan -> {
                         if (createdClan == null) {
                             user.sendMessage("Clan konnte nicht erstellt werden");

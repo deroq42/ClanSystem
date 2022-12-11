@@ -52,7 +52,20 @@ public class InviteManager {
     }
 
     public ListenableFuture<Boolean> removeInvite(UUID player, UUID clan) {
-        return repository.deleteInvite(player, clan);
+        inviteCache.invalidate(player);
+        return repository.deleteInvite(
+                player,
+                clan
+        );
+    }
+
+    public ListenableFuture<Boolean> removeInvitesByPlayer(UUID player) {
+        inviteCache.invalidate(player);
+        return repository.deleteInvitesByPlayer(player);
+    }
+
+    public ListenableFuture<Boolean> removeInvitesByClan(UUID clan) {
+        return repository.deleteInvitesByClan(clan);
     }
 
     public ListenableFuture<Set<UUID>> getInvites(UUID player) {

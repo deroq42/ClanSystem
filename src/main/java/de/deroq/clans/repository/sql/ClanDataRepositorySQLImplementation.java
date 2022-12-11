@@ -3,12 +3,14 @@ package de.deroq.clans.repository.sql;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.*;
+import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.model.Clan;
 import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.user.ClanUser;
 import de.deroq.clans.util.Executors;
 import lombok.RequiredArgsConstructor;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     private final ClanSystem clanSystem;
+    private final DatabaseConnector.MySQL mySQL;
     private final String createClansTable;
     private final String insertClan;
     private final String deleteClan;
@@ -45,6 +48,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     public ClanDataRepositorySQLImplementation(ClanSystem clanSystem) {
         this.clanSystem = clanSystem;
+        this.mySQL = clanSystem.getDatabaseConnector().getMySQL();
         // clans table
         this.createClansTable = "CREATE TABLE IF NOT EXISTS clans(id VARCHAR(36), clanname VARCHAR(16), clantag VARCHAR(5), members VARCHAR(1320), PRIMARY KEY(id))";
         this.insertClan = "INSERT INTO clans(id, clanname, clantag, members) VALUES (?, ?, ?, ?)";
@@ -76,33 +80,33 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
     }
 
     public ClanDataRepositorySQLImplementation createTables() {
-        clanSystem.getDatabaseConnector().getMySQL().update(createClansTable);
-        clanSystem.getDatabaseConnector().getMySQL().update(createClansByNameTable);
-        clanSystem.getDatabaseConnector().getMySQL().update(createClansByTagTable);
-        clanSystem.getDatabaseConnector().getMySQL().update(createClansByPlayerTable);
+        mySQL.update(createClansTable);
+        mySQL.update(createClansByNameTable);
+        mySQL.update(createClansByTagTable);
+        mySQL.update(createClansByPlayerTable);
         return this;
     }
 
     @Override
     public ListenableFuture<Clan> createClan(UUID player, Clan clan) {
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 insertClan,
                 clan.getClanId().toString(),
                 clan.getClanName(),
                 clan.getClanTag(),
                 player.toString() + "=" + Clan.Group.LEADER + ";"
         );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 insertClanByName,
                 clan.getClanName().toLowerCase(),
                 clan.getClanId().toString()
         );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 insertClanByTag,
                 clan.getClanTag().toLowerCase(),
                 clan.getClanId().toString()
         );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 insertClanByPlayer,
                 player.toString(),
                 clan.getClanId().toString()
@@ -112,19 +116,19 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     @Override
     public ListenableFuture<Boolean> deleteClan(Clan clan) {
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 deleteClanByName,
                 clan.getClanName().toLowerCase()
         );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 deleteClanByTag,
                 clan.getClanTag().toLowerCase()
         );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 deleteClanByPlayerClan,
                 clan.getClanId().toString()
         );
-        return clanSystem.getDatabaseConnector().getMySQL().update(
+        return mySQL.update(
                 deleteClan,
                 clan.getClanId().toString()
         );
@@ -132,18 +136,18 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     @Override
     public ListenableFuture<Boolean> renameClan(Clan clan, String oldName, String oldTag) {
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 updateClanNameAndTag,
                 clan.getClanName(),
                 clan.getClanTag(),
                 clan.getClanId().toString()
         );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 updateClanByName,
                 clan.getClanName().toLowerCase(),
                 oldName.toLowerCase()
         );
-        return clanSystem.getDatabaseConnector().getMySQL().update(
+        return mySQL.update(
                 updateClanByTag,
                 clan.getClanTag().toLowerCase(),
                 oldTag.toLowerCase()
@@ -157,20 +161,36 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
             members.append(entry.getKey().toString()).append("=")
                     .append(entry.getValue()).append(";");
         }
-        clanSystem.getUserManager().setClan(
-                user,
-                clan.getClanId()
-        );
-        clanSystem.getInviteManager().removeInvite(
-                user.getUuid(),
-                clan.getClanId()
-        );
-        clanSystem.getDatabaseConnector().getMySQL().update(
+        mySQL.update(
                 insertClanByPlayer,
                 user.getUuid().toString(),
                 clan.getClanId().toString()
         );
-        return clanSystem.getDatabaseConnector().getMySQL().update(
+        return updateMembers(clan);
+    }
+
+    @Override
+    public ListenableFuture<Boolean> leaveClan(ClanUser user, Clan clan) {
+        StringBuilder members = new StringBuilder();
+        for (Map.Entry<UUID, Clan.Group> entry : clan.getMembers().entrySet()) {
+            members.append(entry.getKey().toString()).append("=")
+                    .append(entry.getValue()).append(";");
+        }
+        mySQL.update(
+                deleteClanByPlayerUUID,
+                user.getUuid().toString()
+        );
+        return updateMembers(clan);
+    }
+
+    @Override
+    public ListenableFuture<Boolean> updateMembers(Clan clan) {
+        StringBuilder members = new StringBuilder();
+        for (Map.Entry<UUID, Clan.Group> entry : clan.getMembers().entrySet()) {
+            members.append(entry.getKey().toString()).append("=")
+                    .append(entry.getValue()).append(";");
+        }
+        return mySQL.update(
                 updateClanMembers,
                 members.toString(),
                 clan.getClanId().toString()
@@ -179,10 +199,15 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     @Override
     public synchronized ListenableFuture<Clan> getClanById(UUID id) {
-        return Futures.transform(clanSystem.getDatabaseConnector().getMySQL().query(selectClanById, id.toString()), resultSet -> {
+        ListenableFuture<ResultSet> future = mySQL.query(
+                selectClanById,
+                id.toString()
+        );
+        return Futures.transform(future, resultSet -> {
             try {
                 if (resultSet.next()) {
                     return new Clan(
+                            clanSystem,
                             id,
                             resultSet.getString("clanname"),
                             resultSet.getString("clantag"),
@@ -198,7 +223,11 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     @Override
     public synchronized ListenableFuture<UUID> getClanByName(String clanName) {
-        return Futures.transform(clanSystem.getDatabaseConnector().getMySQL().query(selectClanByName, clanName.toLowerCase()), resultSet -> {
+        ListenableFuture<ResultSet> future = mySQL.query(
+                selectClanByName,
+                clanName.toLowerCase()
+        );
+        return Futures.transform(future, resultSet -> {
             try {
                 if (resultSet.next()) {
                     return UUID.fromString(resultSet.getString("clan"));
@@ -212,7 +241,11 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     @Override
     public synchronized ListenableFuture<UUID> getClanByTag(String clanTag) {
-        return Futures.transform(clanSystem.getDatabaseConnector().getMySQL().query(selectClanByTag, clanTag.toLowerCase()), resultSet -> {
+        ListenableFuture<ResultSet> future = mySQL.query(
+                selectClanByTag,
+                clanTag.toLowerCase()
+        );
+        return Futures.transform(future, resultSet -> {
             try {
                 if (resultSet.next()) {
                     return UUID.fromString(resultSet.getString("clan"));
@@ -226,7 +259,11 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
 
     @Override
     public ListenableFuture<UUID> getClanByPlayer(UUID player) {
-        return Futures.transform(clanSystem.getDatabaseConnector().getMySQL().query(selectClanByPlayer, player.toString()), resultSet -> {
+        ListenableFuture<ResultSet> future = mySQL.query(
+                selectClanByPlayer,
+                player.toString()
+        );
+        return Futures.transform(future, resultSet -> {
             try {
                 if (resultSet.next()) {
                     return UUID.fromString(resultSet.getString("clan"));

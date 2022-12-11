@@ -44,6 +44,10 @@ public class ClanUser {
         return clanSystem.getClanDataRepository().getClanById(clan);
     }
 
+    public boolean isOnline() {
+        return getPlayer() != null;
+    }
+
     public ProxiedPlayer getPlayer() {
         return ProxyServer.getInstance().getPlayer(uuid);
     }

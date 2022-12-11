@@ -15,5 +15,9 @@ public interface ClanInviteRepository {
 
     ListenableFuture<Boolean> deleteInvite(UUID player, UUID clan);
 
+    ListenableFuture<Boolean> deleteInvitesByPlayer(UUID player);
+
+    ListenableFuture<Boolean> deleteInvitesByClan(UUID clan);
+
     ListenableFuture<Set<UUID>> getInvites(UUID player);
 }

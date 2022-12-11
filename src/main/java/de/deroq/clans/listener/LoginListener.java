@@ -26,9 +26,12 @@ public class LoginListener implements Listener {
         String name = event.getConnection().getName();
         ListenableFuture<ClanUser> userFuture = clanSystem.getUserManager().getUser(uuid);
         Callback.of(userFuture, user -> {
+            System.out.println(user);
             if (user == null) {
                 clanSystem.getUserManager().createUser(clanSystem, uuid, name);
                 clanSystem.getUserManager().cacheUuid(name, uuid);
+            } else {
+                clanSystem.getUserManager().cacheOnlineUser(user);
             }
         });
     }

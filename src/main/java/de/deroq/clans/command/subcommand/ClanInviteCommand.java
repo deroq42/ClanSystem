@@ -3,7 +3,6 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.model.Clan;
 import de.deroq.clans.user.ClanUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,7 @@ public class ClanInviteCommand extends ClanSubCommand {
     @Override
     public void run(ClanUser inviter, String[] args) {
         if (args.length != 1) {
-            // Send help.
+            sendHelp(inviter);
             return;
         }
         Callback.of(inviter.getClan(), currentClan -> {
@@ -31,11 +30,15 @@ public class ClanInviteCommand extends ClanSubCommand {
                 inviter.sendMessage("Du bist in keinem Clan");
                 return;
             }
-            if (currentClan.isDefault(inviter.getUuid())) {
+            if (currentClan.isDefault(inviter)) {
                 inviter.sendMessage("Du kannst keine Spieler in den Clan einladen");
                 return;
             }
             String name = args[0];
+            if (name.equalsIgnoreCase(inviter.getName())) {
+                inviter.sendMessage("Du kannst nicht mit dir selber interagieren");
+                return;
+            }
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
             Callback.of(uuidFuture, targetPlayer -> {
                 if (targetPlayer == null) {
@@ -43,12 +46,12 @@ public class ClanInviteCommand extends ClanSubCommand {
                     return;
                 }
                 ListenableFuture<ClanUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
-                Callback.of(userFuture, invited -> {
-                    if (invited == null) {
+                Callback.of(userFuture, invitedUser -> {
+                    if (invitedUser == null) {
                         inviter.sendMessage("Spieler konnte nicht gefunden werden");
                         return;
                     }
-                    if (currentClan.containsUser(targetPlayer)) {
+                    if (currentClan.containsUser(invitedUser)) {
                         inviter.sendMessage("Dieser Spieler ist bereits im Clan");
                         return;
                     }
@@ -58,13 +61,13 @@ public class ClanInviteCommand extends ClanSubCommand {
                             inviter.sendMessage("Dieser Spieler wurde bereits eingeladen");
                             return;
                         }
-                        Callback.of(invited.getClan(), clan -> {
+                        Callback.of(invitedUser.getClan(), clan -> {
                             if (clan != null) {
                                 inviter.sendMessage("Dieser Spieler ist bereits in einem Clan");
                                 return;
                             }
                             clanSystem.getInviteManager().sendInvite(
-                                    invited,
+                                    invitedUser,
                                     currentClan,
                                     inviter,
                                     invites

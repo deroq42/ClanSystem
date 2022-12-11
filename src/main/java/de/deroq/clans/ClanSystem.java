@@ -11,6 +11,7 @@ import de.deroq.clans.database.MySQLConnector;
 import de.deroq.clans.invite.InviteManager;
 import de.deroq.clans.invite.sql.ClanInviteRepositorySQLImplementation;
 import de.deroq.clans.listener.LoginListener;
+import de.deroq.clans.listener.PlayerDisconnectListener;
 import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.repository.ClanInviteRepository;
 import de.deroq.clans.repository.UserRepository;
@@ -116,6 +117,7 @@ public class ClanSystem extends Plugin {
     private void registerListeners() {
         PluginManager pluginManager = ProxyServer.getInstance().getPluginManager();
         pluginManager.registerListener(this, new LoginListener(this));
+        pluginManager.registerListener(this, new PlayerDisconnectListener(this));
     }
 
     private void registerCommands() {
@@ -125,6 +127,11 @@ public class ClanSystem extends Plugin {
         getCommandMap().put("rename", new ClanRenameCommand(this));
         getCommandMap().put("invite", new ClanInviteCommand(this));
         getCommandMap().put("join", new ClanJoinCommand(this));
+        getCommandMap().put("deny", new ClanDenyCommand(this));
+        getCommandMap().put("leave", new ClanLeaveCommand(this));
+        getCommandMap().put("promote", new ClanPromoteCommand(this));
+        getCommandMap().put("demote", new ClanDemoteCommand(this));
+        getCommandMap().put("info", new ClanInfoCommand());
     }
 
     public Config loadConfig(File file, Class<? extends Config> aClass) {

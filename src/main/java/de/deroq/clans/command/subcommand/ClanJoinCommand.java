@@ -23,7 +23,7 @@ public class ClanJoinCommand extends ClanSubCommand {
     @Override
     public void run(ClanUser user, String[] args) {
         if (args.length != 1) {
-            // Send help.
+            sendHelp(user);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
@@ -31,7 +31,7 @@ public class ClanJoinCommand extends ClanSubCommand {
                 user.sendMessage("Du bist bereits in einem Clan");
                 return;
             }
-            String name = args[0];
+            String name = args[0].toLowerCase();
             ListenableFuture<Clan> clanFuture = clanSystem.getClanManager().getClanByName(name);
             Callback.of(clanFuture, clan -> {
                 if (clan == null) {
@@ -44,7 +44,11 @@ public class ClanJoinCommand extends ClanSubCommand {
                         user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
                         return;
                     }
-                    ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().joinClan(user, clan);
+                    ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().acceptInvite(
+                            clanSystem,
+                            user,
+                            clan
+                    );
                     Callback.of(joinFuture, joined -> {
                         if (joined) {
                             clan.broadcast("§c" + user.getName() + " §7hat den Clan betreten");

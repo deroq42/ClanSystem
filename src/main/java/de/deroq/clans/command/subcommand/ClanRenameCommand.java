@@ -19,12 +19,16 @@ public class ClanRenameCommand extends ClanSubCommand {
     @Override
     public void run(ClanUser user, String[] args) {
         if (args.length != 2) {
-            // Send help.
+            sendHelp(user);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
                 user.sendMessage("Du bist in keinem Clan");
+                return;
+            }
+            if (currentClan.isLeader(user)) {
+                user.sendMessage("Du bist kein Leader dieses Clans");
                 return;
             }
             String clanName = args[0];
@@ -55,7 +59,11 @@ public class ClanRenameCommand extends ClanSubCommand {
                         user.sendMessage("Du musst den Namen oder den Tag ändern");
                         return;
                     }
-                    ListenableFuture<Boolean> future = clanSystem.getClanManager().renameClan(currentClan, clanName, clanTag);
+                    ListenableFuture<Boolean> future = clanSystem.getClanManager().renameClan(
+                            currentClan,
+                            clanName,
+                            clanTag
+                    );
                     Callback.of(future, renamed -> {
                         if (renamed) {
                             currentClan.broadcast("Der Clan heißt nun §c" + clanName + " §7[§c" + clanTag + "§7]");

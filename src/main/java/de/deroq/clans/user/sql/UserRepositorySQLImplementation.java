@@ -1,16 +1,15 @@
 package de.deroq.clans.user.sql;
 
-import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
+import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.repository.UserRepository;
 import de.deroq.clans.user.ClanUser;
 import de.deroq.clans.util.Executors;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.UUID;
 
 /**
@@ -20,6 +19,7 @@ import java.util.UUID;
 public class UserRepositorySQLImplementation implements UserRepository {
 
     private final ClanSystem clanSystem;
+    private final DatabaseConnector.MySQL mySQL;
     private final String createUsersTable;
     private final String insertUser;
     private final String updateUserClan;
@@ -30,6 +30,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
 
     public UserRepositorySQLImplementation(ClanSystem clanSystem) {
         this.clanSystem = clanSystem;
+        this.mySQL = clanSystem.getDatabaseConnector().getMySQL();
         // clan_users table
         this.createUsersTable = "CREATE TABLE IF NOT EXISTS clan_users(player VARCHAR(36), name VARCHAR(16), clan VARCHAR(36), PRIMARY KEY(player))";
         this.insertUser = "INSERT INTO clan_users(player, name, clan) VALUES (?, ?, ?)";
@@ -43,14 +44,14 @@ public class UserRepositorySQLImplementation implements UserRepository {
     }
 
     public UserRepositorySQLImplementation createTables() {
-        clanSystem.getDatabaseConnector().getMySQL().update(createUsersTable);
-        clanSystem.getDatabaseConnector().getMySQL().update(createUUIDCacheTable);
+        mySQL.update(createUsersTable);
+        mySQL.update(createUUIDCacheTable);
         return this;
     }
 
     @Override
     public ListenableFuture<Boolean> insertUser(ClanUser user) {
-        return clanSystem.getDatabaseConnector().getMySQL().update(
+        return mySQL.update(
                 insertUser,
                 user.getUuid().toString(),
                 user.getName(),
@@ -59,20 +60,22 @@ public class UserRepositorySQLImplementation implements UserRepository {
     }
 
     @Override
-    public synchronized ListenableFuture<ClanUser> getUser(UUID uuid, Cache<UUID, ListenableFuture<ClanUser>> cache) {
-        return Futures.transform(clanSystem.getDatabaseConnector().getMySQL().query(selectUser, uuid.toString()), resultSet -> {
+    public synchronized ListenableFuture<ClanUser> getUser(UUID uuid) {
+        ListenableFuture<ResultSet> future = mySQL.query(
+                selectUser,
+                uuid.toString()
+        );
+        return Futures.transform(future, resultSet -> {
             try {
                 if (resultSet.next()) {
                     String stringUuid = resultSet.getString("clan");
                     UUID clan = (stringUuid == null ? null : UUID.fromString(stringUuid));
-                    ClanUser user = new ClanUser(
+                    return new ClanUser(
                             clanSystem,
                             uuid,
                             resultSet.getString("name"),
                             clan
                     );
-                    cache.put(uuid, Futures.immediateFuture(user));
-                    return user;
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -83,7 +86,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
 
     @Override
     public ListenableFuture<Boolean> setClan(UUID player, UUID newClan) {
-        return clanSystem.getDatabaseConnector().getMySQL().update(
+        return mySQL.update(
                 updateUserClan,
                 (newClan == null ? null : newClan.toString()),
                 player.toString()
@@ -92,7 +95,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
 
     @Override
     public ListenableFuture<Boolean> cacheUUID(String name, UUID uuid) {
-        return clanSystem.getDatabaseConnector().getMySQL().update(
+        return mySQL.update(
                 insertUUIDCache,
                 name.toLowerCase(),
                 uuid.toString()
@@ -101,7 +104,11 @@ public class UserRepositorySQLImplementation implements UserRepository {
 
     @Override
     public synchronized ListenableFuture<UUID> getUUID(String name) {
-        return Futures.transform(clanSystem.getDatabaseConnector().getMySQL().query(selectUUIDCache, name.toLowerCase()), resultSet -> {
+        ListenableFuture<ResultSet> future = mySQL.query(
+                selectUUIDCache,
+                name.toLowerCase()
+        );
+        return Futures.transform(future, resultSet -> {
             try {
                 if (resultSet.next()) {
                     return UUID.fromString(resultSet.getString("uuid"));

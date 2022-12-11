@@ -1,7 +1,5 @@
 package de.deroq.clans.command;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.user.ClanUser;
 import de.deroq.clans.util.Callback;
@@ -31,7 +29,6 @@ public class ClanCommand extends Command {
             return;
         }
         if (args.length == 0) {
-            // Send help.
             return;
         }
         ClanSubCommand subCommand = clanSystem.getCommandMap().get(args[0].toLowerCase());
@@ -44,11 +41,7 @@ public class ClanCommand extends Command {
         Arrays.stream(args).skip(1).forEach(s -> argsBuilder.append(s).append(" "));
         args = argsBuilder.toString().trim().split(" ");
         String[] finalArgs = args;
-        Callback.of(clanSystem.getUserManager().getUser(player.getUniqueId()), user -> {
-            if (user == null) {
-                throw new RuntimeException("Error while executing clan command: User could not be loaded");
-            }
-            subCommand.run(user, finalArgs);
-        });
+        ClanUser user = clanSystem.getUserManager().getOnlineUser(player.getUniqueId());
+        subCommand.run(user, finalArgs);
     }
 }

@@ -20,6 +20,10 @@ public interface ClanDataRepository {
 
     ListenableFuture<Boolean> joinClan(ClanUser user, Clan clan);
 
+    ListenableFuture<Boolean> leaveClan(ClanUser user, Clan clan);
+
+    ListenableFuture<Boolean> updateMembers(Clan clan);
+
     ListenableFuture<Clan> getClanById(UUID id);
 
     ListenableFuture<UUID> getClanByName(String clanName);

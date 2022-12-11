@@ -1,6 +1,5 @@
 package de.deroq.clans.user;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -11,7 +10,9 @@ import de.deroq.clans.repository.UserRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,9 +25,17 @@ public class UserManager {
     private final UserRepository repository;
 
     @Getter
-    private final Cache<UUID, ListenableFuture<ClanUser>> userCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(30, TimeUnit.MINUTES)
-            .build();
+    private final Map<UUID, ClanUser> onlineUserCache = new ConcurrentHashMap<>();
+
+    @Getter
+    private final LoadingCache<UUID, ListenableFuture<ClanUser>> userCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .build(new CacheLoader<UUID, ListenableFuture<ClanUser>>() {
+                @Override
+                public ListenableFuture<ClanUser> load(UUID uuid) {
+                    return repository.getUser(uuid);
+                }
+            });
 
     @Getter
     private final LoadingCache<String, ListenableFuture<UUID>> uuidCache = CacheBuilder.newBuilder()
@@ -51,22 +60,40 @@ public class UserManager {
     public ListenableFuture<Boolean> setClan(ClanUser user, UUID newClan) {
         user.setClan(newClan);
         userCache.put(user.getUuid(), Futures.immediateFuture(user));
-        return repository.setClan(user.getUuid(), newClan);
+        return repository.setClan(
+                user.getUuid(),
+                newClan
+        );
     }
 
-    public ListenableFuture<ClanUser> getUser(UUID uuid) {
-        if (!userCache.asMap().containsKey(uuid)) {
-            return repository.getUser(uuid, userCache);
+    public ListenableFuture<ClanUser> getUser(UUID player) {
+        if (onlineUserCache.containsKey(player)) {
+            return Futures.immediateFuture(onlineUserCache.get(player));
         }
-        return userCache.getIfPresent(uuid);
+        return userCache.getUnchecked(player);
+    }
+
+    public ClanUser getOnlineUser(UUID player) {
+        return onlineUserCache.get(player);
+    }
+
+    public void cacheOnlineUser(ClanUser user) {
+        onlineUserCache.put(user.getUuid(), user);
+    }
+
+    public void invalidateOnlineUser(UUID player) {
+        onlineUserCache.remove(player);
     }
 
     public ListenableFuture<Boolean> cacheUuid(String name, UUID uuid) {
-        uuidCache.put(name, Futures.immediateFuture(uuid));
-        return repository.cacheUUID(name, uuid);
+        uuidCache.put(name.toLowerCase(), Futures.immediateFuture(uuid));
+        return repository.cacheUUID(
+                name,
+                uuid
+        );
     }
 
     public ListenableFuture<UUID> getUUID(String name) {
-        return uuidCache.getUnchecked(name);
+        return uuidCache.getUnchecked(name.toLowerCase());
     }
 }

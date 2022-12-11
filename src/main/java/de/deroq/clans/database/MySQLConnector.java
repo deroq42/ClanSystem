@@ -1,6 +1,5 @@
 package de.deroq.clans.database;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.util.Executors;
@@ -9,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.sql.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Miles
@@ -101,19 +99,23 @@ public class MySQLConnector implements DatabaseConnector {
 
 
         @Override
-        public void update(String query, Object... objects) {
-            Executors.asyncExecutor().execute(() -> {
-                try (PreparedStatement preparedStatement = connector.getConnection().prepareStatement(query)) {
-                    if (objects != null && objects.length != 0) {
-                        int i = 1;
-                        for (Object object : objects) {
-                            preparedStatement.setObject(i, object);
-                            i++;
+        public ListenableFuture<Boolean> update(String query, Object... objects) {
+            return Executors.asyncExecutor().submit(new Callable<Boolean>() {
+                @Override
+                public Boolean call() {
+                    try {
+                        PreparedStatement preparedStatement = connector.getConnection().prepareStatement(query);
+                        if (objects != null && objects.length != 0) {
+                            int i = 1;
+                            for (Object object : objects) {
+                                preparedStatement.setObject(i, object);
+                                i++;
+                            }
                         }
+                        return preparedStatement.executeUpdate() >= 1;
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
                     }
-                    preparedStatement.execute();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
                 }
             });
         }

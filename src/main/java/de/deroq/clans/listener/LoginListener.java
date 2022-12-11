@@ -1,10 +1,15 @@
 package de.deroq.clans.listener;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
+import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+
+import java.util.UUID;
 
 /**
  * @author Miles
@@ -17,9 +22,14 @@ public class LoginListener implements Listener {
 
     @EventHandler
     public void onLogin(LoginEvent event) {
-        clanSystem.getUserManager().createUser(
-                event.getConnection().getUniqueId(),
-                event.getConnection().getName()
-        );
+        UUID uuid = event.getConnection().getUniqueId();
+        String name = event.getConnection().getName();
+        ListenableFuture<ClanUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+        Callback.of(userFuture, user -> {
+            if (user == null) {
+                clanSystem.getUserManager().createUser(clanSystem, uuid, name);
+                clanSystem.getUserManager().cacheUuid(name, uuid);
+            }
+        });
     }
 }

@@ -19,6 +19,6 @@ public interface DatabaseConnector {
 
         ListenableFuture<ResultSet> query(String query, Object... objects);
 
-        void update(String query, Object... objects);
+        ListenableFuture<Boolean> update(String query, Object... objects);
     }
 }

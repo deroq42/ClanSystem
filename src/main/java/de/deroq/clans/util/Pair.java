@@ -8,24 +8,28 @@ import lombok.Getter;
  */
 public class Pair<K, V> {
 
-    @Getter
-    private final K left;
+    private final K k;
 
-    @Getter
-    private final K key;
-
-    @Getter
-    private final V right;
-
-    @Getter
-    private final V value;
+    private final V v;
 
     public Pair(K k, V v) {
-        this.left = k;
-        this.key = k;
-        this.right = v;
-        this.value = v;
+        this.k = k;
+        this.v = v;
     }
 
+    public K getKey() {
+        return k;
+    }
 
+    public V getValue() {
+        return v;
+    }
+
+    public K getLeft() {
+        return k;
+    }
+
+    public V getRight() {
+        return v;
+    }
 }

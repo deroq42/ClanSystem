@@ -2,3 +2,5 @@ name: ClanSystem
 version: 1.0
 author: deroq
 main: de.deroq.clans.ClanSystem
+commands:
+  clan:

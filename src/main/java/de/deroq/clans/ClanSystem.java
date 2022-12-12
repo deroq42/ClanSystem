@@ -1,13 +1,15 @@
 package de.deroq.clans;
 
 import com.google.gson.Gson;
+import de.deroq.clans.command.ClanChatCommand;
 import de.deroq.clans.command.ClanCommand;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.command.subcommand.*;
 import de.deroq.clans.config.Config;
 import de.deroq.clans.config.MainConfig;
+import de.deroq.clans.config.MySQLConfig;
 import de.deroq.clans.database.DatabaseConnector;
-import de.deroq.clans.database.MySQLConnector;
+import de.deroq.clans.database.sql.MySQLConnector;
 import de.deroq.clans.invite.InviteManager;
 import de.deroq.clans.invite.sql.ClanInviteRepositorySQLImplementation;
 import de.deroq.clans.listener.LoginListener;
@@ -29,7 +31,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * @author Miles
@@ -39,6 +40,9 @@ public class ClanSystem extends Plugin {
 
     @Getter
     private MainConfig mainConfig;
+
+    @Getter
+    private MySQLConfig mySQLConfig;
 
     @Getter
     private DatabaseConnector databaseConnector;
@@ -67,6 +71,7 @@ public class ClanSystem extends Plugin {
     public static final Pattern VALID_CLAN_NAMES = Pattern.compile("^[a-zA-Z0-9$&öäüÖÄÜ#+_\\-]{3,16}$");
     public static final Pattern VALID_CLAN_TAGS = Pattern.compile("^[a-zA-Z0-9$&öäüÖÄÜ#+_.,\\-]{2,5}$");
     public static final String PREFIX = "§7[§cClans§7] ";
+    public static int CLAN_PLAYER_LIMIT;
 
     @Override
     public void onEnable() {
@@ -85,24 +90,40 @@ public class ClanSystem extends Plugin {
     }
 
     private void loadConfigs() {
+        loadMainConfig();
+        loadMySQLConfig();
+    }
+
+    private void loadMainConfig() {
         File mainConfigFile = new File("plugins/ClanSystem", "config.json");
         this.mainConfig = (MainConfig) loadConfig(mainConfigFile, MainConfig.class);
         if (mainConfig == null) {
             mainConfig = new MainConfig(mainConfigFile);
         }
-        int enabledDatabases = (int) Stream.of(mainConfig.isMySQL(), mainConfig.isMongoDB(), mainConfig.isCassandra())
-                .filter(b -> b)
-                .count();
-        if (enabledDatabases != 1) {
-            throw new RuntimeException("Error while loading main config: You must use one database");
+        if (mainConfig.getClanPlayerLimit() > 1394) {
+            throw new RuntimeException("Error while loading main config: Clan player limit is larger than 1394");
+        }
+        CLAN_PLAYER_LIMIT = mainConfig.getClanPlayerLimit();
+    }
+
+    private void loadMySQLConfig() {
+        File mySQLConfigFile = new File("plugins/ClanSystem", "mysql.json");
+        this.mySQLConfig = (MySQLConfig) loadConfig(mySQLConfigFile, MySQLConfig.class);
+        if (mySQLConfig == null) {
+            mySQLConfig = new MySQLConfig(mySQLConfigFile);
         }
     }
 
     private void establishDatabaseConnection() {
-        if (mainConfig.isMySQL()) {
-            this.databaseConnector = new MySQLConnector(this, "localhost", "clansystem", "3306", "root", "");
-            databaseConnector.connect();
-        }
+        this.databaseConnector = new MySQLConnector(
+                this,
+                mySQLConfig.getHost(),
+                mySQLConfig.getDatabase(),
+                mySQLConfig.getPort(),
+                mySQLConfig.getUsername(),
+                mySQLConfig.getPassword()
+        );
+        databaseConnector.connect();
     }
 
     private void makeInstances() {
@@ -122,6 +143,7 @@ public class ClanSystem extends Plugin {
 
     private void registerCommands() {
         ProxyServer.getInstance().getPluginManager().registerCommand(this, new ClanCommand(this));
+        ProxyServer.getInstance().getPluginManager().registerCommand(this, new ClanChatCommand(this));
         getCommandMap().put("create", new ClanCreateCommand(this));
         getCommandMap().put("delete", new ClanDeleteCommand(this));
         getCommandMap().put("rename", new ClanRenameCommand(this));
@@ -131,7 +153,11 @@ public class ClanSystem extends Plugin {
         getCommandMap().put("leave", new ClanLeaveCommand(this));
         getCommandMap().put("promote", new ClanPromoteCommand(this));
         getCommandMap().put("demote", new ClanDemoteCommand(this));
-        getCommandMap().put("info", new ClanInfoCommand());
+        getCommandMap().put("info", new ClanInfoCommand(this));
+        getCommandMap().put("tinfo", new ClanTagInfoCommand(this));
+        getCommandMap().put("ninfo", new ClanNameInfoCommand(this));
+        getCommandMap().put("uinfo", new ClanUserInfoCommand(this));
+        getCommandMap().put("denyall", new ClanDenyAllCommand(this));
     }
 
     public Config loadConfig(File file, Class<? extends Config> aClass) {

@@ -1,10 +1,10 @@
 package de.deroq.clans.command;
 
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.user.ClanUser;
-import de.deroq.clans.util.Callback;
+import de.deroq.clans.user.AbstractUser;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 
@@ -41,7 +41,11 @@ public class ClanCommand extends Command {
         Arrays.stream(args).skip(1).forEach(s -> argsBuilder.append(s).append(" "));
         args = argsBuilder.toString().trim().split(" ");
         String[] finalArgs = args;
-        ClanUser user = clanSystem.getUserManager().getOnlineUser(player.getUniqueId());
+        AbstractUser user = clanSystem.getUserManager().getOnlineUser(player.getUniqueId());
+        if (user == null) {
+            commandSender.sendMessage(TextComponent.fromLegacyText("§cBefehl konnte nicht ausgeführt wurden, rejoin und versuch es nochmal"));
+            return;
+        }
         subCommand.run(user, finalArgs);
     }
 }

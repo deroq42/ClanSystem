@@ -25,14 +25,14 @@ public class UserManager {
     private final UserRepository repository;
 
     @Getter
-    private final Map<UUID, ClanUser> onlineUserCache = new ConcurrentHashMap<>();
+    private final Map<UUID, AbstractUser> onlineUserCache = new ConcurrentHashMap<>();
 
     @Getter
-    private final LoadingCache<UUID, ListenableFuture<ClanUser>> userCache = CacheBuilder.newBuilder()
+    private final LoadingCache<UUID, ListenableFuture<AbstractUser>> userCache = CacheBuilder.newBuilder()
             .expireAfterAccess(5, TimeUnit.MINUTES)
-            .build(new CacheLoader<UUID, ListenableFuture<ClanUser>>() {
+            .build(new CacheLoader<UUID, ListenableFuture<AbstractUser>>() {
                 @Override
-                public ListenableFuture<ClanUser> load(UUID uuid) {
+                public ListenableFuture<AbstractUser> load(UUID uuid) {
                     return repository.getUser(uuid);
                 }
             });
@@ -54,10 +54,12 @@ public class UserManager {
                 name,
                 null
         );
+        userCache.put(uuid, Futures.immediateFuture(user));
+        onlineUserCache.put(uuid, user);
         return repository.insertUser(user);
     }
 
-    public ListenableFuture<Boolean> setClan(ClanUser user, UUID newClan) {
+    public ListenableFuture<Boolean> setClan(AbstractUser user, UUID newClan) {
         user.setClan(newClan);
         userCache.put(user.getUuid(), Futures.immediateFuture(user));
         return repository.setClan(
@@ -66,18 +68,18 @@ public class UserManager {
         );
     }
 
-    public ListenableFuture<ClanUser> getUser(UUID player) {
+    public ListenableFuture<AbstractUser> getUser(UUID player) {
         if (onlineUserCache.containsKey(player)) {
             return Futures.immediateFuture(onlineUserCache.get(player));
         }
         return userCache.getUnchecked(player);
     }
 
-    public ClanUser getOnlineUser(UUID player) {
+    public AbstractUser getOnlineUser(UUID player) {
         return onlineUserCache.get(player);
     }
 
-    public void cacheOnlineUser(ClanUser user) {
+    public void cacheOnlineUser(AbstractUser user) {
         onlineUserCache.put(user.getUuid(), user);
     }
 

@@ -10,7 +10,7 @@ import java.util.function.Consumer;
  * @author Miles
  * @since 10.12.2022
  */
-public class Callback {
+public abstract class Callback {
 
         public static <V> void of(ListenableFuture<V> future, Consumer<V> consumer) {
             Futures.addCallback(future, new FutureCallback<V>() {

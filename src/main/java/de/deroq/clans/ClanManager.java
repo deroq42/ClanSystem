@@ -5,9 +5,10 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.model.Clan;
 import de.deroq.clans.repository.ClanDataRepository;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Executors;
 import lombok.Getter;
@@ -28,11 +29,11 @@ public class ClanManager {
     private final ClanDataRepository repository;
 
     @Getter
-    private final LoadingCache<UUID, ListenableFuture<Clan>> clanByIdCache = CacheBuilder.newBuilder()
+    private final LoadingCache<UUID, ListenableFuture<AbstractClan>> clanByIdCache = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.HOURS)
-            .build(new CacheLoader<UUID, ListenableFuture<Clan>>() {
+            .build(new CacheLoader<UUID, ListenableFuture<AbstractClan>>() {
                 @Override
-                public ListenableFuture<Clan> load(UUID id) {
+                public ListenableFuture<AbstractClan> load(UUID id) {
                     return repository.getClanById(id);
                 }
             });
@@ -67,7 +68,7 @@ public class ClanManager {
                 }
             });
 
-    public ListenableFuture<Clan> createClan(ClanSystem clanSystem, ClanUser user, String clanName, String clanTag) {
+    public ListenableFuture<AbstractClan> createClan(ClanSystem clanSystem, AbstractUser user, String clanName, String clanTag) {
         UUID id = UUID.randomUUID();
         Clan clan = new Clan(
                 clanSystem,
@@ -84,27 +85,27 @@ public class ClanManager {
         return repository.createClan(user.getUuid(), clan);
     }
 
-    public ListenableFuture<Boolean> deleteClan(ClanSystem clanSystem, Clan clan) {
+    public ListenableFuture<Boolean> deleteClan(ClanSystem clanSystem, AbstractClan clan) {
         clanByIdCache.invalidate(clan.getClanId());
         clanByNameCache.invalidate(clan.getClanName());
         clanByTagCache.invalidate(clan.getClanTag());
         clan.getOnlinePlayers().forEach(uuid -> {
-            ListenableFuture<ClanUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+            ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
             Callback.of(userFuture, onlineUser -> clanSystem.getUserManager().setClan(onlineUser, null));
         });
         clanSystem.getInviteManager().removeInvitesByClan(clan.getClanId());
         return repository.deleteClan(clan);
     }
 
-    public ListenableFuture<Boolean> leaveClan(ClanSystem clanSystem, ClanUser user, Clan clan) {
-        clan.leave(user.getUuid());
+    public ListenableFuture<Boolean> leaveClan(ClanSystem clanSystem, AbstractUser user, AbstractClan clan) {
+        clan.leave(user);
         clanByPlayerCache.invalidate(user.getUuid());
         clanByIdCache.put(user.getUuid(), Futures.immediateFuture(clan));
         clanSystem.getUserManager().setClan(user, null);
         return repository.leaveClan(user, clan);
     }
 
-    public ListenableFuture<Boolean> renameClan(Clan clan, String name, String tag) {
+    public ListenableFuture<Boolean> renameClan(AbstractClan clan, String name, String tag) {
         String oldName = clan.getClanName();
         String oldTag = clan.getClanTag();
         if (!oldName.equalsIgnoreCase(name)) {
@@ -119,7 +120,7 @@ public class ClanManager {
         return repository.renameClan(clan, oldName, oldTag);
     }
 
-    public ListenableFuture<Boolean> acceptInvite(ClanSystem clanSystem, ClanUser user, Clan clan) {
+    public ListenableFuture<Boolean> acceptInvite(ClanSystem clanSystem, AbstractUser user, AbstractClan clan) {
         user.setClan(clan.getClanId());
         clan.join(user.getUuid());
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
@@ -129,19 +130,19 @@ public class ClanManager {
         return repository.joinClan(user, clan);
     }
 
-    public ListenableFuture<Boolean> denyInvite(ClanSystem clanSystem, ClanUser user, Clan clan) {
+    public ListenableFuture<Boolean> denyInvite(ClanSystem clanSystem, AbstractUser user, AbstractClan clan) {
         return clanSystem.getInviteManager().removeInvite(user.getUuid(), clan.getClanId());
     }
 
-    public ListenableFuture<Clan.Group> promoteUser(ClanUser user, Clan clan) {
-        Clan.Group group = clan.promote(user.getUuid());
+    public ListenableFuture<Clan.Group> promoteUser(AbstractUser user, AbstractClan clan) {
+        Clan.Group group = clan.promote(user);
         updateClan(clan);
         repository.updateMembers(clan);
         return Futures.immediateFuture(group);
     }
 
-    public ListenableFuture<Clan.Group> demoteUser(ClanUser user, Clan clan) {
-        Clan.Group group = clan.demote(user.getUuid());
+    public ListenableFuture<Clan.Group> demoteUser(AbstractUser user, AbstractClan clan) {
+        Clan.Group group = clan.demote(user);
         updateClan(clan);
         repository.updateMembers(clan);
         return Futures.immediateFuture(group);
@@ -155,28 +156,26 @@ public class ClanManager {
         return Futures.transform(clanByTagCache.getUnchecked(clanTag.toLowerCase()), Objects::isNull, Executors.asyncExecutor());
     }
 
-    public ListenableFuture<Clan> getClanById(UUID id) {
+    public ListenableFuture<AbstractClan> getClanById(UUID id) {
+        if (id == null) {
+            return Futures.immediateFuture(null);
+        }
         return clanByIdCache.getUnchecked(id);
     }
 
-    public ListenableFuture<Clan> getClanByName(String clanName) {
-        return Futures.transformAsync(repository.getClanByName(clanName.toLowerCase()), id -> {
-            if (id == null) {
-                return null;
-            }
-            return getClanById(id);
-        }, Executors.asyncExecutor());
+    public ListenableFuture<AbstractClan> getClanByName(String clanName) {
+        return Futures.transformAsync(repository.getClanByName(clanName), this::getClanById, Executors.asyncExecutor());
     }
 
-    public ListenableFuture<Clan> getClanByTag(String clanTag) {
-        return Futures.transformAsync(repository.getClanByTag(clanTag.toLowerCase()), this::getClanById, Executors.asyncExecutor());
+    public ListenableFuture<AbstractClan> getClanByTag(String clanTag) {
+        return Futures.transformAsync(repository.getClanByTag(clanTag), this::getClanById, Executors.asyncExecutor());
     }
 
-    public ListenableFuture<Clan> getClanByPlayer(UUID player) {
+    public ListenableFuture<AbstractClan> getClanByPlayer(UUID player) {
         return Futures.transformAsync(repository.getClanByPlayer(player), this::getClanById, Executors.asyncExecutor());
     }
 
-    private void updateClan(Clan clan) {
+    private void updateClan(AbstractClan clan) {
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
     }
 }

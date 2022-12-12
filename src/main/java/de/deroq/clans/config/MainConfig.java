@@ -11,13 +11,7 @@ import java.io.File;
 public class MainConfig extends Config {
 
     @Getter
-    private boolean mySQL = true;
-
-    @Getter
-    private boolean mongoDB = false;
-
-    @Getter
-    private boolean cassandra = false;
+    private int clanPlayerLimit = 1394;
 
     public MainConfig(File file) {
         super(file);

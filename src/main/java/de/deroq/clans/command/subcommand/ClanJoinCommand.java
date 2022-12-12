@@ -3,8 +3,8 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.model.AbstractClan;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +21,7 @@ public class ClanJoinCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(ClanUser user, String[] args) {
+    public void run(AbstractUser user, String[] args) {
         if (args.length != 1) {
             sendHelp(user);
             return;
@@ -32,7 +32,7 @@ public class ClanJoinCommand extends ClanSubCommand {
                 return;
             }
             String name = args[0].toLowerCase();
-            ListenableFuture<Clan> clanFuture = clanSystem.getClanManager().getClanByName(name);
+            ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
             Callback.of(clanFuture, clan -> {
                 if (clan == null) {
                     user.sendMessage("Diesen Clan gibt es nicht");
@@ -42,6 +42,10 @@ public class ClanJoinCommand extends ClanSubCommand {
                 Callback.of(invitesFuture, invites -> {
                     if (!invites.contains(clan.getClanId())) {
                         user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
+                        return;
+                    }
+                    if (clan.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
+                        user.sendMessage("Dieser Clan ist voll");
                         return;
                     }
                     ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().acceptInvite(

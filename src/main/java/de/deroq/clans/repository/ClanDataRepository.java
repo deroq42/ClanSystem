@@ -1,8 +1,8 @@
 package de.deroq.clans.repository;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.model.AbstractClan;
+import de.deroq.clans.user.AbstractUser;
 
 import java.util.UUID;
 
@@ -12,19 +12,19 @@ import java.util.UUID;
  */
 public interface ClanDataRepository {
 
-    ListenableFuture<Clan> createClan(UUID player, Clan clan);
+    ListenableFuture<AbstractClan> createClan(UUID player, AbstractClan clan);
 
-    ListenableFuture<Boolean> deleteClan(Clan clan);
+    ListenableFuture<Boolean> deleteClan(AbstractClan clan);
 
-    ListenableFuture<Boolean> renameClan(Clan clan, String oldName, String oldTag);
+    ListenableFuture<Boolean> renameClan(AbstractClan clan, String oldName, String oldTag);
 
-    ListenableFuture<Boolean> joinClan(ClanUser user, Clan clan);
+    ListenableFuture<Boolean> joinClan(AbstractUser user, AbstractClan clan);
 
-    ListenableFuture<Boolean> leaveClan(ClanUser user, Clan clan);
+    ListenableFuture<Boolean> leaveClan(AbstractUser user, AbstractClan clan);
 
-    ListenableFuture<Boolean> updateMembers(Clan clan);
+    ListenableFuture<Boolean> updateMembers(AbstractClan clan);
 
-    ListenableFuture<Clan> getClanById(UUID id);
+    ListenableFuture<AbstractClan> getClanById(UUID id);
 
     ListenableFuture<UUID> getClanByName(String clanName);
 

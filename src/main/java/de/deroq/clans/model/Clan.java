@@ -1,22 +1,20 @@
 package de.deroq.clans.model;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 import lombok.Getter;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
  * @author Miles
  * @since 09.12.2022
  */
-public class Clan {
+public class Clan implements AbstractClan {
 
     private final ClanSystem clanSystem;
 
@@ -33,7 +31,7 @@ public class Clan {
     private final Map<UUID, Clan.Group> members;
 
     @Getter
-    private final Clan.Info info;
+    private final AbstractInfo info;
 
     public Clan(ClanSystem clanSystem, UUID clanId, String clanName, String clanTag, Map<UUID, Clan.Group> members) {
         this.clanSystem = clanSystem;
@@ -41,45 +39,56 @@ public class Clan {
         this.clanName = clanName;
         this.clanTag = clanTag;
         this.members = members;
-        this.info = new Info(this);
+        this.info = new ClanInfo(this);
     }
 
+    @Override
     public synchronized void rename(String name, String tag) {
         this.clanName = name;
         this.clanTag = tag;
     }
 
+    @Override
     public synchronized void join(UUID player) {
         members.put(player, Clan.Group.DEFAULT);
     }
 
-    public synchronized void leave(UUID player) {
-        getMembers().remove(player);
-        getInfo().remove(player);
+    @Override
+    public synchronized void leave(AbstractUser user) {
+        getMembers().remove(user.getUuid());
+        getInfo().remove(user.getUuid());
     }
 
-    public synchronized Clan.Group promote(UUID player) {
-        Clan.Group oldGroup = members.get(player);
+    @Override
+    public synchronized Clan.Group promote(AbstractUser user) {
+        Clan.Group oldGroup = members.get(user.getUuid());
         Clan.Group newGroup = Clan.Group.getNextGroup(oldGroup);
         if (newGroup == null) {
             return null;
         }
-        info.update(player, newGroup);
-        members.replace(player, oldGroup, newGroup);
+        info.update(user.getUuid(), newGroup);
+        members.replace(user.getUuid(), oldGroup, newGroup);
         return newGroup;
     }
 
-    public synchronized Clan.Group demote(UUID player) {
-        Clan.Group oldGroup = members.get(player);
+    @Override
+    public synchronized Clan.Group demote(AbstractUser user) {
+        Clan.Group oldGroup = members.get(user.getUuid());
         Clan.Group newGroup = Clan.Group.getPreviousGroup(oldGroup);
         if (newGroup == null) {
             return null;
         }
-        info.update(player, newGroup);
-        members.replace(player, oldGroup, newGroup);
+        info.update(user.getUuid(), newGroup);
+        members.replace(user.getUuid(), oldGroup, newGroup);
         return newGroup;
     }
 
+    @Override
+    public synchronized void chat(AbstractUser user, String message) {
+        broadcast("§c" + user.getName() + "§7: " + message);
+    }
+
+    @Override
     public synchronized void broadcast(String message) {
         members.keySet()
                 .stream()
@@ -88,28 +97,33 @@ public class Clan {
                 .forEach(player -> player.sendMessage(TextComponent.fromLegacyText(ClanSystem.PREFIX + message)));
     }
 
-    public Clan.Group getGroup(ClanUser user) {
+    @Override
+    public Clan.Group getGroup(AbstractUser user) {
         return members.get(user.getUuid());
     }
 
-    public boolean isLeader(ClanUser user) {
+    @Override
+    public boolean isLeader(AbstractUser user) {
         if (!members.containsKey(user.getUuid())) {
             return false;
         }
         return members.get(user.getUuid()) == Clan.Group.LEADER;
     }
 
-    public boolean isDefault(ClanUser user) {
+    @Override
+    public boolean isDefault(AbstractUser user) {
         if (!members.containsKey(user.getUuid())) {
             return false;
         }
         return members.get(user.getUuid()) == Clan.Group.DEFAULT;
     }
 
-    public boolean containsUser(ClanUser user) {
+    @Override
+    public boolean containsUser(AbstractUser user) {
         return members.containsKey(user.getUuid());
     }
 
+    @Override
     public Collection<UUID> getOnlinePlayers() {
         return members.keySet()
                 .stream()
@@ -117,61 +131,21 @@ public class Clan {
                 .collect(Collectors.toList());
     }
 
-    public Set<ClanUser> getUsers() {
-        Set<ClanUser> users = new HashSet<>();
-        members.keySet().forEach(uuid -> {
-            try {
-                users.add(clanSystem.getUserManager().getUser(uuid).get(50, TimeUnit.MILLISECONDS));
-            } catch (InterruptedException | ExecutionException | TimeoutException ignored) {
-            }
-        });
+    @Override
+    public Set<ListenableFuture<AbstractUser>> getUsersAsFuture() {
+        Set<ListenableFuture<AbstractUser>> users = new HashSet<>();
+        members.keySet().forEach(uuid -> users.add(clanSystem.getUserManager().getUser(uuid)));
         return users;
     }
 
-    public enum Group {
-
-        LEADER(2, "Leader"),
-        MODERATOR(1, "Moderator"),
-        DEFAULT(0, "Mitglied");
-
-        @Getter
-        private final int id;
-
-        @Getter
-        private final String text;
-
-        Group(int id, String text) {
-            this.id = id;
-            this.text = text;
-        }
-
-        public static Group getNextGroup(Group oldGroup) {
-            for (Group group : Group.values()) {
-                if (group.getId() == oldGroup.getId() + 1) {
-                    return group;
-                }
-            }
-            return null;
-        }
-
-        public static Group getPreviousGroup(Group oldGroup) {
-            for (Group group : Group.values()) {
-                if (group.getId() == oldGroup.getId() - 1) {
-                    return group;
-                }
-            }
-            return null;
-        }
-    }
-
-    public static class Info {
+    static class ClanInfo implements AbstractInfo {
 
         private final Clan clan;
 
         @Getter
         private final Map<Clan.Group, Set<UUID>> members;
 
-        public Info(Clan clan) {
+        public ClanInfo(Clan clan) {
             this.clan = clan;
             this.members = new HashMap<>();
             members.put(Clan.Group.LEADER, getUsersWithGroup(Clan.Group.LEADER));
@@ -179,6 +153,7 @@ public class Clan {
             members.put(Clan.Group.DEFAULT, getUsersWithGroup(Clan.Group.DEFAULT));
         }
 
+        @Override
         public Set<UUID> getUsersWithGroup(Clan.Group group) {
             return clan.getMembers().entrySet()
                     .stream()
@@ -187,11 +162,13 @@ public class Clan {
                     .collect(Collectors.toSet());
         }
 
+        @Override
         public void update(UUID player, Clan.Group group) {
             remove(player);
             members.get(group).add(player);
         }
 
+        @Override
         public void remove(UUID player) {
             Arrays.stream(Clan.Group.values())
                     .filter(group -> members.get(group).contains(player))

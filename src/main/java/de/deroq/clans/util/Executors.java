@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
  * @author Miles
  * @since 09.12.2022
  */
-public class Executors {
+public abstract class Executors {
 
     private static final ListeningExecutorService asyncExecutor = MoreExecutors.listeningDecorator(new ScheduledThreadPoolExecutor(1));
 

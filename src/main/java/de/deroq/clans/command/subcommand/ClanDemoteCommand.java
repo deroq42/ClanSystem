@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +20,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(ClanUser user, String[] args) {
+    public void run(AbstractUser user, String[] args) {
         if (args.length != 1) {
             sendHelp(user);
             return;
@@ -45,7 +45,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
                     user.sendMessage("Spieler konnte nicht gefunden werden");
                     return;
                 }
-                ListenableFuture<ClanUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
+                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
                 Callback.of(userFuture, demotedUser -> {
                     if (demotedUser == null) {
                         user.sendMessage("Spieler konnte nicht gefunden werden");

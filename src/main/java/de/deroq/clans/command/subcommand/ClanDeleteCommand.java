@@ -3,7 +3,7 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +17,7 @@ public class ClanDeleteCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(ClanUser user, String[] args) {
+    public void run(AbstractUser user, String[] args) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
                 user.sendMessage("Du bist in keinem Clan");

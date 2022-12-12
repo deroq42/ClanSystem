@@ -1,1 +1,2 @@
-USER DOES NOT GET CREATED CORRECTLY UNTIL RESTART
+- Clanbeitrittsanfragen hinzufügen
+- Invites in ein ClanInvite Objekt packen oder als Pair<UUID, UUID> (clan, inviter)

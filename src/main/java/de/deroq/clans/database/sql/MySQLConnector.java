@@ -1,7 +1,8 @@
-package de.deroq.clans.database;
+package de.deroq.clans.database.sql;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
+import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.util.Executors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,11 @@ public class MySQLConnector implements DatabaseConnector {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    @Override
+    public Mongo getMongo() {
+        return null;
     }
 
     @RequiredArgsConstructor

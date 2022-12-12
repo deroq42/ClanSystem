@@ -3,7 +3,7 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +20,7 @@ public class ClanInviteCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(ClanUser inviter, String[] args) {
+    public void run(AbstractUser inviter, String[] args) {
         if (args.length != 1) {
             sendHelp(inviter);
             return;
@@ -45,7 +45,7 @@ public class ClanInviteCommand extends ClanSubCommand {
                     inviter.sendMessage("Spieler konnte nicht gefunden werden");
                     return;
                 }
-                ListenableFuture<ClanUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
+                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
                 Callback.of(userFuture, invitedUser -> {
                     if (invitedUser == null) {
                         inviter.sendMessage("Spieler konnte nicht gefunden werden");

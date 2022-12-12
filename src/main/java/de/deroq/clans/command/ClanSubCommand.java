@@ -1,9 +1,15 @@
 package de.deroq.clans.command;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import de.deroq.clans.ClanSystem;
+import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.util.Callback;
+import net.md_5.bungee.api.ProxyServer;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Miles
@@ -11,9 +17,9 @@ import java.util.*;
  */
 public abstract class ClanSubCommand {
 
-    public abstract void run(ClanUser user, String[] args);
+    public abstract void run(AbstractUser user, String[] args);
 
-    public void sendHelp(ClanUser user) {
+    public void sendHelp(AbstractUser user) {
         user.sendMessage("/clan create <name> <tag>");
         user.sendMessage("/clan delete");
         user.sendMessage("/clan rename <name> <tag>");
@@ -24,38 +30,47 @@ public abstract class ClanSubCommand {
         user.sendMessage("/clan promote <player>");
         user.sendMessage("/clan demote <player>");
         user.sendMessage("/clan info");
+        user.sendMessage("/clan tinfo <tag>");
+        user.sendMessage("/clan ninfo <name>");
+        user.sendMessage("/clan uinfo <player>");
+        user.sendMessage("/cc <message>");
+        user.sendMessage("/clan denyall");
     }
 
-    public void sendInfo(ClanUser user, Clan clan, boolean showOnlineStatus) {
+    public void sendInfo(ClanSystem clanSystem, AbstractUser user, AbstractClan clan, boolean showOnlineStatus) {
         user.sendMessage("Informationen zum " + clan.getClanName());
         user.sendMessage("Name: " + clan.getClanName());
         user.sendMessage("Tag: " + clan.getClanTag());
         user.sendMessage("Mitglieder: " + clan.getMembers().size());
 
         Map<Clan.Group, Set<String>> map = new HashMap<>();
-        for (ClanUser target : clan.getUsers()) {
-            Clan.Group group = clan.getGroup(target);
-            Set<String> names = map.computeIfAbsent(group, o -> new HashSet<>());
-            String text = target.getName();
-            if (showOnlineStatus) {
-                String onlineStatus = (target.isOnline() ? "§aOnline" : "§cOffline");
-                text = text + " §7(" + onlineStatus + "§7)";
-            }
-            names.add(text);
+        for (ListenableFuture<AbstractUser> future : clan.getUsersAsFuture()) {
+            Callback.of(future, temp -> {
+                Clan.Group group = clan.getGroup(temp);
+                Set<String> names = map.computeIfAbsent(group, o -> new HashSet<>());
+                String text = temp.getName();
+                if (showOnlineStatus) {
+                    String onlineStatus = (temp.isOnline() ? "§aOnline" : "§cOffline");
+                    text = text + " §7(" + onlineStatus + "§7)";
+                }
+                names.add(text);
+            });
         }
-        // Leader
-        Set<String> leaders = map.getOrDefault(Clan.Group.LEADER, Collections.emptySet());
-        user.sendMessage("Leader (" + leaders.size() + ")");
-        leaders.forEach(user::sendMessage);
+        ProxyServer.getInstance().getScheduler().schedule(clanSystem, () -> {
+            // Leader
+            Set<String> leaders = map.getOrDefault(Clan.Group.LEADER, Collections.emptySet());
+            user.sendMessage("Leader (" + leaders.size() + ")");
+            leaders.forEach(user::sendMessage);
 
-        // Moderatoren
-        Set<String> mods = map.getOrDefault(Clan.Group.MODERATOR, Collections.emptySet());
-        user.sendMessage("Moderatoren (" + mods.size() + ")");
-        mods.forEach(user::sendMessage);
+            // Moderatoren
+            Set<String> mods = map.getOrDefault(Clan.Group.MODERATOR, Collections.emptySet());
+            user.sendMessage("Moderatoren (" + mods.size() + ")");
+            mods.forEach(user::sendMessage);
 
-        // Mitglieder
-        Set<String> defaults = map.getOrDefault(Clan.Group.DEFAULT, Collections.emptySet());
-        user.sendMessage("Mitglieder (" + defaults.size() + ")");
-        defaults.forEach(user::sendMessage);
+            // Mitglieder
+            Set<String> defaults = map.getOrDefault(Clan.Group.DEFAULT, Collections.emptySet());
+            user.sendMessage("Mitglieder (" + defaults.size() + ")");
+            defaults.forEach(user::sendMessage);
+        }, 1, TimeUnit.MILLISECONDS);
     }
 }

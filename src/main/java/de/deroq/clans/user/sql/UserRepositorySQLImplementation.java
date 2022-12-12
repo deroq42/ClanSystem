@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.repository.UserRepository;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.user.ClanUser;
 import de.deroq.clans.util.Executors;
 
@@ -50,7 +51,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     }
 
     @Override
-    public ListenableFuture<Boolean> insertUser(ClanUser user) {
+    public ListenableFuture<Boolean> insertUser(AbstractUser user) {
         return mySQL.update(
                 insertUser,
                 user.getUuid().toString(),
@@ -60,7 +61,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     }
 
     @Override
-    public synchronized ListenableFuture<ClanUser> getUser(UUID uuid) {
+    public synchronized ListenableFuture<AbstractUser> getUser(UUID uuid) {
         ListenableFuture<ResultSet> future = mySQL.query(
                 selectUser,
                 uuid.toString()

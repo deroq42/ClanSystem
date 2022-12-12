@@ -1,7 +1,7 @@
 package de.deroq.clans.repository;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 
 import java.util.UUID;
 
@@ -11,9 +11,9 @@ import java.util.UUID;
  */
 public interface UserRepository {
 
-    ListenableFuture<Boolean> insertUser(ClanUser user);
+    ListenableFuture<Boolean> insertUser(AbstractUser user);
 
-    ListenableFuture<ClanUser> getUser(UUID player);
+    ListenableFuture<AbstractUser> getUser(UUID player);
 
     ListenableFuture<Boolean> setClan(UUID player, UUID newClan);
 

@@ -4,3 +4,4 @@ author: deroq
 main: de.deroq.clans.ClanSystem
 commands:
   clan:
+  clanchat:

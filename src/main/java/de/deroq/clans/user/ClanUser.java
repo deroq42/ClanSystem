@@ -3,7 +3,7 @@ package de.deroq.clans.user;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.model.Clan;
+import de.deroq.clans.model.AbstractClan;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +18,7 @@ import java.util.UUID;
  * @since 10.12.2022
  */
 @AllArgsConstructor
-public class ClanUser {
+public class ClanUser implements AbstractUser {
 
     private final ClanSystem clanSystem;
 
@@ -31,23 +31,27 @@ public class ClanUser {
     @Setter
     private UUID clan;
 
+    @Override
     public void sendMessage(String message) {
         if (getPlayer() != null) {
             getPlayer().sendMessage(TextComponent.fromLegacyText(ClanSystem.PREFIX + message));
         }
     }
 
-    public ListenableFuture<Clan> getClan() {
+    @Override
+    public ListenableFuture<AbstractClan> getClan() {
         if (clan == null) {
             return Futures.immediateFuture(null);
         }
         return clanSystem.getClanDataRepository().getClanById(clan);
     }
 
+    @Override
     public boolean isOnline() {
         return getPlayer() != null;
     }
 
+    @Override
     public ProxiedPlayer getPlayer() {
         return ProxyServer.getInstance().getPlayer(uuid);
     }

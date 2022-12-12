@@ -5,9 +5,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import de.deroq.clans.model.Clan;
+import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanInviteRepository;
-import de.deroq.clans.user.ClanUser;
+import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class InviteManager {
                 }
             });
 
-    public void sendInvite(ClanUser invited, Clan clan, ClanUser inviter, Set<UUID> invites) {
+    public void sendInvite(AbstractUser invited, AbstractClan clan, AbstractUser inviter, Set<UUID> invites) {
         ListenableFuture<Boolean> future = repository.insertInvite(
                 invited.getUuid(),
                 clan.getClanId(),

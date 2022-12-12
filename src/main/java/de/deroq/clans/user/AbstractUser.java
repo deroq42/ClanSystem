@@ -2,6 +2,7 @@ package de.deroq.clans.user;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.model.AbstractClan;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.UUID;
@@ -13,6 +14,8 @@ import java.util.UUID;
 public interface AbstractUser {
 
     void sendMessage(String message);
+
+    void sendMessage(TextComponent textComponent);
 
     ListenableFuture<AbstractClan> getClan();
 

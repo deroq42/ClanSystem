@@ -30,7 +30,7 @@ public class ClanLeaveCommand extends ClanSubCommand {
                     return;
                 }
             }
-            if (args.length == 0 || args[0].equalsIgnoreCase("confirm")) {
+            if (args.length == 0 || !args[0].equalsIgnoreCase("confirm")) {
                 user.sendMessage("Nutze den Befehl /clan leave confirm");
                 return;
             }

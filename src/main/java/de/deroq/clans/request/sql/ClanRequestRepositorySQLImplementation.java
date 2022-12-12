@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Miles
@@ -25,7 +26,7 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
     private final String createRequestsTable;
     private final String insertRequest;
     private final String deleteRequest;
-    private final String selectRequests;
+    private final String selectRequestsByClan;
     private final String deleteRequests;
 
     public ClanRequestRepositorySQLImplementation(ClanSystem clanSystem) {
@@ -33,7 +34,7 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
         this.createRequestsTable = "CREATE TABLE IF NOT EXISTS clan_requests(clan VARCHAR(36), player VARCHAR(36), PRIMARY KEY(clan, player))";
         this.insertRequest = "INSERT INTO clan_requests(clan, player) VALUES (?, ?)";
         this.deleteRequest = "DELETE FROM clan_requests WHERE clan = ? AND player = ?";
-        this.selectRequests = "SELECT player FROM clan_requests WHERE clan = ?";
+        this.selectRequestsByClan = "SELECT player FROM clan_requests WHERE clan = ?";
         this.deleteRequests = "DELETE FROM clan_requests WHERE clan = ?";
     }
 
@@ -69,12 +70,12 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
     @Override
     public ListenableFuture<Set<UUID>> getRequests(UUID clan) {
         ListenableFuture<ResultSet> future = mySQL.query(
-                selectRequests,
+                selectRequestsByClan,
                 clan.toString()
         );
         return Futures.transform(future, resultSet -> {
             try {
-                Set<UUID> requests = new HashSet<>();
+                Set<UUID> requests = ConcurrentHashMap.newKeySet();
                 while (resultSet.next()) {
                     UUID player = UUID.fromString(resultSet.getString("player"));
                     requests.add(player);

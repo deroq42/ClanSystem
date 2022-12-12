@@ -10,7 +10,6 @@ import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanRequestRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
-import de.deroq.clans.util.Executors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

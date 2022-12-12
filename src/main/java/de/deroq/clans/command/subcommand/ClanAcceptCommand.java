@@ -53,8 +53,12 @@ public class ClanAcceptCommand extends ClanSubCommand {
                             user.sendMessage("Dieser Spieler hat keine Beitrittsanfrage gesendet");
                             return;
                         }
-                        ListenableFuture<Boolean> acceptRequest = clanSystem.getRequestManager().acceptRequest(requestedUser, user, currentClan, requests);
-                        Callback.of(acceptRequest, accepted -> {
+                        if (currentClan.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
+                            user.sendMessage("Dieser Clan ist voll");
+                            return;
+                        }
+                        ListenableFuture<Boolean> acceptFuture = clanSystem.getRequestManager().acceptRequest(requestedUser, user, currentClan, requests);
+                        Callback.of(acceptFuture, accepted -> {
                             if (accepted) {
                                 currentClan.broadcast("§c" + requestedUser.getName() + " §7hat den Clan betreten");
                             }

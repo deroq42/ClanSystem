@@ -2,6 +2,7 @@ package de.deroq.clans.command;
 
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.util.MessageBuilder;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;

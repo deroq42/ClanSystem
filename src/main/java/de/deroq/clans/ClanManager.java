@@ -11,7 +11,7 @@ import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Executors;
-import javafx.util.Pair;
+import de.deroq.clans.util.MessageBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -176,5 +176,19 @@ public class ClanManager {
 
     private void updateClan(AbstractClan clan) {
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
+    }
+
+    public void checkForPendingRequests(AbstractUser user) {
+        Callback.of(user.getClan(), currentClan -> {
+            if (currentClan != null && currentClan.isLeader(user)) {
+                ListenableFuture<Set<UUID>> requestFuture = clanSystem.getRequestManager().getRequests(currentClan);
+                Callback.of(requestFuture, requests -> {
+                    if (!requests.isEmpty()) {
+                        user.sendMessage("Es sind noch §c" + requests.size() + " §7Beitrittsanfragen offen");
+                        user.sendMessage(new MessageBuilder("§a[ANSEHEN]").addClickEvent("/clan requests").toComponent());
+                    }
+                });
+            }
+        });
     }
 }

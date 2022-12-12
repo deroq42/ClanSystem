@@ -39,6 +39,13 @@ public class ClanUser implements AbstractUser {
     }
 
     @Override
+    public void sendMessage(TextComponent textComponent) {
+        if (getPlayer() != null) {
+            getPlayer().sendMessage(textComponent);
+        }
+    }
+
+    @Override
     public ListenableFuture<AbstractClan> getClan() {
         if (clan == null) {
             return Futures.immediateFuture(null);

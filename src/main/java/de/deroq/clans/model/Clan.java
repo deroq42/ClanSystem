@@ -132,9 +132,21 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public Set<ListenableFuture<AbstractUser>> getUsersAsFuture() {
+    public Set<ListenableFuture<AbstractUser>> getMembersAsFuture() {
         Set<ListenableFuture<AbstractUser>> users = new HashSet<>();
         members.keySet().forEach(uuid -> users.add(clanSystem.getUserManager().getUser(uuid)));
+        return users;
+    }
+
+    @Override
+    public Set<ListenableFuture<AbstractUser>> getOnlineLeadersAsFuture() {
+        Set<ListenableFuture<AbstractUser>> users = new HashSet<>();
+        members.entrySet()
+                .stream()
+                .filter(uuidGroupEntry -> uuidGroupEntry.getValue() == Group.LEADER)
+                .map(Map.Entry::getKey)
+                .filter(uuid -> ProxyServer.getInstance().getPlayer(uuid) != null)
+                .forEach(uuid -> users.add(clanSystem.getUserManager().getUser(uuid)));
         return users;
     }
 

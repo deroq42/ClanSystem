@@ -1,2 +1,0 @@
-- Clanbeitrittsanfragen hinzufügen
-- Invites in ein ClanInvite Objekt packen oder als Pair<UUID, UUID> (clan, inviter)

@@ -31,10 +31,7 @@ public class ClanDeleteCommand extends ClanSubCommand {
                 user.sendMessage("Nutze den Befehl /clan delete confirm");
                 return;
             }
-            ListenableFuture<Boolean> future = clanSystem.getClanManager().deleteClan(
-                    clanSystem,
-                    currentClan
-            );
+            ListenableFuture<Boolean> future = clanSystem.getClanManager().deleteClan(currentClan);
             Callback.of(future, deleted -> {
                 if (deleted) {
                     currentClan.broadcast("Der Clan wurde gelöscht");

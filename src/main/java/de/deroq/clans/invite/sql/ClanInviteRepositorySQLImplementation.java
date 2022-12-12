@@ -6,6 +6,7 @@ import de.deroq.clans.ClanSystem;
 import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.repository.ClanInviteRepository;
 import de.deroq.clans.util.Executors;
+import de.deroq.clans.util.Pair;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,16 +30,15 @@ public class ClanInviteRepositorySQLImplementation implements ClanInviteReposito
 
     public ClanInviteRepositorySQLImplementation(ClanSystem clanSystem) {
         this.mySQL = clanSystem.getDatabaseConnector().getMySQL();
-        // clan_invites table
-        this.createInvitesTable = "CREATE TABLE IF NOT EXISTS clan_invites(player VARCHAR(36), clan VARCHAR(36), inviter VARCHAR(36))";
+        this.createInvitesTable = "CREATE TABLE IF NOT EXISTS clan_invites(player VARCHAR(36), clan VARCHAR(36), inviter VARCHAR(36), PRIMARY KEY(player, clan))";
         this.insertInvite = "INSERT INTO clan_invites(player, clan, inviter) VALUES (?, ?, ?)";
         this.deleteInvite = "DELETE FROM clan_invites WHERE player = ? AND clan = ?";
         this.deleteInvitesByPlayer = "DELETE FROM clan_invites WHERE player = ?";
         this.deleteInvitesByClan = "DELETE FROM clan_invites WHERE clan = ?";
-        this.selectInvites = "SELECT clan FROM clan_invites WHERE player = ?";
+        this.selectInvites = "SELECT clan, inviter FROM clan_invites WHERE player = ?";
     }
 
-    public ClanInviteRepositorySQLImplementation createTables() {
+    public ClanInviteRepository createTables() {
         mySQL.update(createInvitesTable);
         return this;
     }
@@ -47,9 +47,7 @@ public class ClanInviteRepositorySQLImplementation implements ClanInviteReposito
     public ListenableFuture<Boolean> insertInvite(UUID invited, UUID clan, UUID inviter) {
         return mySQL.update(
                 insertInvite,
-                invited.toString(),
-                clan.toString(),
-                inviter.toString()
+                invited.toString(), clan.toString(), inviter.toString()
         );
     }
 
@@ -57,8 +55,7 @@ public class ClanInviteRepositorySQLImplementation implements ClanInviteReposito
     public ListenableFuture<Boolean> deleteInvite(UUID player, UUID clan) {
         return mySQL.update(
                 deleteInvite,
-                player.toString(),
-                clan.toString()
+                player.toString(), clan.toString()
         );
     }
 
@@ -74,21 +71,22 @@ public class ClanInviteRepositorySQLImplementation implements ClanInviteReposito
     public ListenableFuture<Boolean> deleteInvitesByClan(UUID clan) {
         return mySQL.update(
                 deleteInvitesByClan,
-                clan.toString()
-        );
+                clan.toString());
     }
 
     @Override
-    public ListenableFuture<Set<UUID>> getInvites(UUID player) {
+    public ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(UUID player) {
         ListenableFuture<ResultSet> future = mySQL.query(
                 selectInvites,
                 player.toString()
         );
         return Futures.transform(future, resultSet -> {
             try {
-                Set<UUID> invites = new HashSet<>();
+                Set<Pair<UUID, UUID>> invites = new HashSet<>();
                 while (resultSet.next()) {
-                    invites.add(UUID.fromString(resultSet.getString("clan")));
+                    UUID clan = UUID.fromString(resultSet.getString("clan"));
+                    UUID inviter = UUID.fromString(resultSet.getString("inviter"));
+                    invites.add(Pair.of(clan, inviter));
                 }
                 return invites;
             } catch (SQLException e) {

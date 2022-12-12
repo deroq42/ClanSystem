@@ -80,7 +80,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
         this.selectClanByPlayer = "SELECT clan FROM clans_by_player WHERE player = ?";
     }
 
-    public ClanDataRepositorySQLImplementation createTables() {
+    public ClanDataRepository createTables() {
         mySQL.update(createClansTable);
         mySQL.update(createClansByNameTable);
         mySQL.update(createClansByTagTable);
@@ -92,25 +92,19 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
     public ListenableFuture<AbstractClan> createClan(UUID player, AbstractClan clan) {
         mySQL.update(
                 insertClan,
-                clan.getClanId().toString(),
-                clan.getClanName(),
-                clan.getClanTag(),
-                player.toString() + "=" + Clan.Group.LEADER + ";"
+                clan.getClanId().toString(), clan.getClanName(), clan.getClanTag(), player.toString() + "=" + Clan.Group.LEADER + ";"
         );
         mySQL.update(
                 insertClanByName,
-                clan.getClanName().toLowerCase(),
-                clan.getClanId().toString()
+                clan.getClanName().toLowerCase(), clan.getClanId().toString()
         );
         mySQL.update(
                 insertClanByTag,
-                clan.getClanTag().toLowerCase(),
-                clan.getClanId().toString()
+                clan.getClanTag().toLowerCase(), clan.getClanId().toString()
         );
         mySQL.update(
                 insertClanByPlayer,
-                player.toString(),
-                clan.getClanId().toString()
+                player.toString(), clan.getClanId().toString()
         );
         return Futures.immediateFuture(clan);
     }
@@ -139,19 +133,15 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
     public ListenableFuture<Boolean> renameClan(AbstractClan clan, String oldName, String oldTag) {
         mySQL.update(
                 updateClanNameAndTag,
-                clan.getClanName(),
-                clan.getClanTag(),
-                clan.getClanId().toString()
+                clan.getClanName(), clan.getClanTag(), clan.getClanId().toString()
         );
         mySQL.update(
                 updateClanByName,
-                clan.getClanName().toLowerCase(),
-                oldName.toLowerCase()
+                clan.getClanName().toLowerCase(), oldName.toLowerCase()
         );
         return mySQL.update(
                 updateClanByTag,
-                clan.getClanTag().toLowerCase(),
-                oldTag.toLowerCase()
+                clan.getClanTag().toLowerCase(), oldTag.toLowerCase()
         );
     }
 
@@ -159,8 +149,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
     public ListenableFuture<Boolean> joinClan(AbstractUser user, AbstractClan clan) {
         mySQL.update(
                 insertClanByPlayer,
-                user.getUuid().toString(),
-                clan.getClanId().toString()
+                user.getUuid().toString(), clan.getClanId().toString()
         );
         return updateMembers(clan);
     }
@@ -183,8 +172,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
         }
         return mySQL.update(
                 updateClanMembers,
-                members.toString(),
-                clan.getClanId().toString()
+                members.toString(), clan.getClanId().toString()
         );
     }
 

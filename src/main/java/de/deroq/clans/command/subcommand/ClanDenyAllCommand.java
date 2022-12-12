@@ -5,6 +5,7 @@ import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
+import de.deroq.clans.util.Pair;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Set;
@@ -21,15 +22,15 @@ public class ClanDenyAllCommand extends ClanSubCommand {
 
     @Override
     public void run(AbstractUser user, String[] args) {
-        ListenableFuture<Set<UUID>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
+        ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
         Callback.of(invitesFuture, invites -> {
             if (invites.isEmpty()) {
                 user.sendMessage("Du hast keine offenen Einladungen");
                 return;
             }
-            ListenableFuture<Boolean> removeFuture = clanSystem.getInviteManager().removeInvitesByPlayer(user.getUuid());
-            Callback.of(removeFuture, removed -> {
-                if (removed) {
+            ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyAllInvites(user, invites);
+            Callback.of(denyFuture, denied -> {
+                if (denied) {
                     user.sendMessage("Du hast alle offenen Einladungen abgelehnt");
                 }
             });

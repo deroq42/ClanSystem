@@ -5,10 +5,12 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import de.deroq.clans.ClanSystem;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanInviteRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
+import de.deroq.clans.util.Pair;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -23,52 +25,70 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class InviteManager {
 
+    private final ClanSystem clanSystem;
     private final ClanInviteRepository repository;
 
     @Getter
-    private final LoadingCache<UUID, ListenableFuture<Set<UUID>>> inviteCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(10, TimeUnit.MINUTES)
-            .build(new CacheLoader<UUID, ListenableFuture<Set<UUID>>>() {
+    private final LoadingCache<UUID, ListenableFuture<Set<Pair<UUID, UUID>>>> inviteCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(30, TimeUnit.MINUTES)
+            .build(new CacheLoader<UUID, ListenableFuture<Set<Pair<UUID, UUID>>>>() {
                 @Override
-                public ListenableFuture<Set<UUID>> load(UUID player) {
+                public ListenableFuture<Set<Pair<UUID, UUID>>> load(UUID player) {
                     return repository.getInvites(player);
                 }
             });
 
-    public void sendInvite(AbstractUser invited, AbstractClan clan, AbstractUser inviter, Set<UUID> invites) {
-        ListenableFuture<Boolean> future = repository.insertInvite(
+    public ListenableFuture<Boolean> sendInvite(AbstractUser invited, AbstractClan clan, AbstractUser inviter, Set<Pair<UUID, UUID>> invites) {
+        Pair<UUID, UUID> invite = Pair.of(clan.getClanId(), inviter.getUuid());
+        invites.add(invite);
+        inviteCache.put(invited.getUuid(), Futures.immediateFuture(invites));
+        invited.sendMessage("Du wurdest vom Clan §c" + clan.getClanName() + " §7eingeladen");
+        return repository.insertInvite(
                 invited.getUuid(),
                 clan.getClanId(),
                 inviter.getUuid()
         );
-        Callback.of(future, inviteSent -> {
-            if (inviteSent) {
-                invites.add(clan.getClanId());
-                inviter.sendMessage("Du hast §c" + invited.getName() + " §7eine Einladung gesendet");
-                invited.sendMessage("Du wurdest vom Clan §c" + clan.getClanName() + " §7eingeladen");
-                inviteCache.put(invited.getUuid(), Futures.immediateFuture(invites));
-            }
+    }
+
+    public ListenableFuture<Boolean> denyInvite(AbstractUser user, AbstractClan clan, Set<Pair<UUID, UUID>> invites) {
+        invites.forEach(clanUuidPair -> {
+            ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
+            Callback.of(userFuture, inviterUser -> {
+                if (inviterUser != null) {
+                    inviterUser.sendMessage("§c" + user.getName() + " §7hat deine Einladung abgelehnt");
+                }
+            });
         });
+        return removeInvite(user, clan);
     }
 
-    public ListenableFuture<Boolean> removeInvite(UUID player, UUID clan) {
-        inviteCache.invalidate(player);
-        return repository.deleteInvite(
-                player,
-                clan
-        );
+    public ListenableFuture<Boolean> denyAllInvites(AbstractUser user, Set<Pair<UUID, UUID>> invites) {
+        invites.forEach(clanUuidPair -> {
+            ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
+            Callback.of(userFuture, inviterUser -> {
+                if (inviterUser != null) {
+                    inviterUser.sendMessage("§c" + user.getName() + " §7hat deine Einladung abgelehnt");
+                }
+            });
+        });
+        return removeInvitesByUser(user);
     }
 
-    public ListenableFuture<Boolean> removeInvitesByPlayer(UUID player) {
-        inviteCache.invalidate(player);
-        return repository.deleteInvitesByPlayer(player);
+    public ListenableFuture<Boolean> removeInvite(AbstractUser user, AbstractClan clan) {
+        inviteCache.invalidate(user.getUuid());
+        return repository.deleteInvite(user.getUuid(), clan.getClanId());
+    }
+
+    public ListenableFuture<Boolean> removeInvitesByUser(AbstractUser user) {
+        inviteCache.invalidate(user.getUuid());
+        return repository.deleteInvitesByPlayer(user.getUuid());
     }
 
     public ListenableFuture<Boolean> removeInvitesByClan(UUID clan) {
         return repository.deleteInvitesByClan(clan);
     }
 
-    public ListenableFuture<Set<UUID>> getInvites(UUID player) {
+    public ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(UUID player) {
         return inviteCache.getUnchecked(player);
     }
 }

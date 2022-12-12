@@ -11,11 +11,13 @@ import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Executors;
+import javafx.util.Pair;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class ClanManager {
 
+    private final ClanSystem clanSystem;
     private final ClanDataRepository repository;
 
     @Getter
@@ -68,7 +71,7 @@ public class ClanManager {
                 }
             });
 
-    public ListenableFuture<AbstractClan> createClan(ClanSystem clanSystem, AbstractUser user, String clanName, String clanTag) {
+    public ListenableFuture<AbstractClan> createClan(AbstractUser user, String clanName, String clanTag) {
         UUID id = UUID.randomUUID();
         Clan clan = new Clan(
                 clanSystem,
@@ -85,7 +88,7 @@ public class ClanManager {
         return repository.createClan(user.getUuid(), clan);
     }
 
-    public ListenableFuture<Boolean> deleteClan(ClanSystem clanSystem, AbstractClan clan) {
+    public ListenableFuture<Boolean> deleteClan(AbstractClan clan) {
         clanByIdCache.invalidate(clan.getClanId());
         clanByNameCache.invalidate(clan.getClanName());
         clanByTagCache.invalidate(clan.getClanTag());
@@ -97,7 +100,7 @@ public class ClanManager {
         return repository.deleteClan(clan);
     }
 
-    public ListenableFuture<Boolean> leaveClan(ClanSystem clanSystem, AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> leaveClan(AbstractUser user, AbstractClan clan) {
         clan.leave(user);
         clanByPlayerCache.invalidate(user.getUuid());
         clanByIdCache.put(user.getUuid(), Futures.immediateFuture(clan));
@@ -120,18 +123,14 @@ public class ClanManager {
         return repository.renameClan(clan, oldName, oldTag);
     }
 
-    public ListenableFuture<Boolean> acceptInvite(ClanSystem clanSystem, AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> joinClan(AbstractUser user, AbstractClan clan) {
         user.setClan(clan.getClanId());
         clan.join(user.getUuid());
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
         clanByPlayerCache.put(user.getUuid(), Futures.immediateFuture(clan.getClanId()));
         clanSystem.getUserManager().setClan(user, clan.getClanId());
-        clanSystem.getInviteManager().removeInvite(user.getUuid(), clan.getClanId());
+        clanSystem.getInviteManager().removeInvite(user, clan);
         return repository.joinClan(user, clan);
-    }
-
-    public ListenableFuture<Boolean> denyInvite(ClanSystem clanSystem, AbstractUser user, AbstractClan clan) {
-        return clanSystem.getInviteManager().removeInvite(user.getUuid(), clan.getClanId());
     }
 
     public ListenableFuture<Clan.Group> promoteUser(AbstractUser user, AbstractClan clan) {

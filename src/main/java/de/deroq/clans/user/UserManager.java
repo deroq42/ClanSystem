@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class UserManager {
 
+    private final ClanSystem clanSystem;
     private final UserRepository repository;
 
     @Getter
@@ -47,13 +48,8 @@ public class UserManager {
                 }
             });
 
-    public ListenableFuture<Boolean> createUser(ClanSystem clanSystem, UUID uuid, String name) {
-        ClanUser user = new ClanUser(
-                clanSystem,
-                uuid,
-                name,
-                null
-        );
+    public ListenableFuture<Boolean> createUser(UUID uuid, String name) {
+        ClanUser user = new ClanUser(clanSystem, uuid, name, null);
         userCache.put(uuid, Futures.immediateFuture(user));
         onlineUserCache.put(uuid, user);
         return repository.insertUser(user);
@@ -62,10 +58,7 @@ public class UserManager {
     public ListenableFuture<Boolean> setClan(AbstractUser user, UUID newClan) {
         user.setClan(newClan);
         userCache.put(user.getUuid(), Futures.immediateFuture(user));
-        return repository.setClan(
-                user.getUuid(),
-                newClan
-        );
+        return repository.setClan(user.getUuid(), newClan);
     }
 
     public ListenableFuture<AbstractUser> getUser(UUID player) {
@@ -89,10 +82,7 @@ public class UserManager {
 
     public ListenableFuture<Boolean> cacheUuid(String name, UUID uuid) {
         uuidCache.put(name.toLowerCase(), Futures.immediateFuture(uuid));
-        return repository.cacheUUID(
-                name,
-                uuid
-        );
+        return repository.cacheUUID(name, uuid);
     }
 
     public ListenableFuture<UUID> getUUID(String name) {

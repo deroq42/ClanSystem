@@ -50,12 +50,7 @@ public class ClanCreateCommand extends ClanSubCommand {
                         user.sendMessage("Es gibt bereits einen Clan mit diesem Tag");
                         return;
                     }
-                    ListenableFuture<AbstractClan> createClan = clanSystem.getClanManager().createClan(
-                            clanSystem,
-                            user,
-                            clanName,
-                            clanTag
-                    );
+                    ListenableFuture<AbstractClan> createClan = clanSystem.getClanManager().createClan(user, clanName, clanTag);
                     Callback.of(createClan, createdClan -> {
                         if (createdClan == null) {
                             user.sendMessage("Clan konnte nicht erstellt werden");

@@ -5,8 +5,10 @@ import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
+import de.deroq.clans.util.Pair;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -55,23 +57,27 @@ public class ClanInviteCommand extends ClanSubCommand {
                         inviter.sendMessage("Dieser Spieler ist bereits im Clan");
                         return;
                     }
-                    ListenableFuture<Set<UUID>> invitesFuture = clanSystem.getInviteManager().getInvites(targetPlayer);
+                    ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(targetPlayer);
                     Callback.of(invitesFuture, invites -> {
-                        if (invites.contains(currentClan.getClanId())) {
+                        Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
+                                .filter(clanUserPair -> clanUserPair.getKey().equals(currentClan.getClanId()))
+                                .findFirst();
+                        if (optionalInvite.isPresent()) {
                             inviter.sendMessage("Dieser Spieler wurde bereits eingeladen");
                             return;
+
                         }
                         Callback.of(invitedUser.getClan(), clan -> {
                             if (clan != null) {
                                 inviter.sendMessage("Dieser Spieler ist bereits in einem Clan");
                                 return;
                             }
-                            clanSystem.getInviteManager().sendInvite(
-                                    invitedUser,
-                                    currentClan,
-                                    inviter,
-                                    invites
-                            );
+                            ListenableFuture<Boolean> inviteFuture = clanSystem.getInviteManager().sendInvite(invitedUser, currentClan, inviter, invites);
+                            Callback.of(inviteFuture, invited -> {
+                                if (invited) {
+                                    inviter.sendMessage("Du hast §c" + invitedUser.getName() + " §7eine Einladung gesendet");
+                                }
+                            });
                         });
                     });
                 });

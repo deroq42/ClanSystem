@@ -44,7 +44,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
         this.selectUUIDCache = "SELECT uuid FROM uuid_cache WHERE name = ?";
     }
 
-    public UserRepositorySQLImplementation createTables() {
+    public UserRepository createTables() {
         mySQL.update(createUsersTable);
         mySQL.update(createUUIDCacheTable);
         return this;
@@ -54,9 +54,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     public ListenableFuture<Boolean> insertUser(AbstractUser user) {
         return mySQL.update(
                 insertUser,
-                user.getUuid().toString(),
-                user.getName(),
-                null
+                user.getUuid().toString(), user.getName(), null
         );
     }
 
@@ -89,8 +87,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     public ListenableFuture<Boolean> setClan(UUID player, UUID newClan) {
         return mySQL.update(
                 updateUserClan,
-                (newClan == null ? null : newClan.toString()),
-                player.toString()
+                (newClan == null ? null : newClan.toString()), player.toString()
         );
     }
 
@@ -98,8 +95,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     public ListenableFuture<Boolean> cacheUUID(String name, UUID uuid) {
         return mySQL.update(
                 insertUUIDCache,
-                name.toLowerCase(),
-                uuid.toString()
+                name.toLowerCase(), uuid.toString()
         );
     }
 

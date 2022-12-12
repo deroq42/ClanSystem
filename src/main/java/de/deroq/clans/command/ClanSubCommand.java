@@ -33,8 +33,11 @@ public abstract class ClanSubCommand {
         user.sendMessage("/clan tinfo <tag>");
         user.sendMessage("/clan ninfo <name>");
         user.sendMessage("/clan uinfo <player>");
-        user.sendMessage("/cc <message>");
         user.sendMessage("/clan denyall");
+        user.sendMessage("/clan request <clan>");
+        user.sendMessage("/clan accept <player>");
+        user.sendMessage("/clan decline <player>");
+        user.sendMessage("/cc <message>");
     }
 
     public void sendInfo(ClanSystem clanSystem, AbstractUser user, AbstractClan clan, boolean showOnlineStatus) {
@@ -44,13 +47,13 @@ public abstract class ClanSubCommand {
         user.sendMessage("Mitglieder: " + clan.getMembers().size());
 
         Map<Clan.Group, Set<String>> map = new HashMap<>();
-        for (ListenableFuture<AbstractUser> future : clan.getUsersAsFuture()) {
-            Callback.of(future, temp -> {
-                Clan.Group group = clan.getGroup(temp);
+        for (ListenableFuture<AbstractUser> future : clan.getMembersAsFuture()) {
+            Callback.of(future, member -> {
+                Clan.Group group = clan.getGroup(member);
                 Set<String> names = map.computeIfAbsent(group, o -> new HashSet<>());
-                String text = temp.getName();
+                String text = member.getName();
                 if (showOnlineStatus) {
-                    String onlineStatus = (temp.isOnline() ? "§aOnline" : "§cOffline");
+                    String onlineStatus = (member.isOnline() ? "§aOnline" : "§cOffline");
                     text = text + " §7(" + onlineStatus + "§7)";
                 }
                 names.add(text);

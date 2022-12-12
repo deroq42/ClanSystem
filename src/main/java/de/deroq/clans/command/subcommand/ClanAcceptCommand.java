@@ -3,19 +3,19 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * @author Miles
- * @since 11.12.2022
+ * @since 12.12.2022
  */
 @RequiredArgsConstructor
-public class ClanPromoteCommand extends ClanSubCommand {
+public class ClanAcceptCommand extends ClanSubCommand {
 
     private final ClanSystem clanSystem;
 
@@ -35,10 +35,6 @@ public class ClanPromoteCommand extends ClanSubCommand {
                 return;
             }
             String name = args[0];
-            if (name.equalsIgnoreCase(user.getName())) {
-                user.sendMessage("Du kannst nicht mit dir selber interagieren");
-                return;
-            }
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
             Callback.of(uuidFuture, targetPlayer -> {
                 if (targetPlayer == null) {
@@ -46,22 +42,23 @@ public class ClanPromoteCommand extends ClanSubCommand {
                     return;
                 }
                 ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
-                Callback.of(userFuture, promotedUser -> {
-                    if (promotedUser == null) {
+                Callback.of(userFuture, requestedUser -> {
+                    if (requestedUser == null) {
                         user.sendMessage("Spieler konnte nicht gefunden werden");
                         return;
                     }
-                    if (!currentClan.containsUser(promotedUser)) {
-                        user.sendMessage("Dieser Spieler ist nicht im Clan");
-                        return;
-                    }
-                    ListenableFuture<AbstractClan.Group> groupFuture =  clanSystem.getClanManager().promoteUser(promotedUser, currentClan);
-                    Callback.of(groupFuture, group -> {
-                        if (group == null) {
-                            user.sendMessage("Dieser Spieler ist bereits Leader");
-                        } else {
-                            currentClan.broadcast("§c" + promotedUser.getName() + " §7ist nun §c" + group.getText());
+                    ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
+                    Callback.of(requestsFuture, requests -> {
+                        if (!requests.contains(requestedUser.getUuid())) {
+                            user.sendMessage("Dieser Spieler hat keine Beitrittsanfrage gesendet");
+                            return;
                         }
+                        ListenableFuture<Boolean> acceptRequest = clanSystem.getRequestManager().acceptRequest(requestedUser, user, currentClan, requests);
+                        Callback.of(acceptRequest, accepted -> {
+                            if (accepted) {
+                                currentClan.broadcast("§c" + requestedUser.getName() + " §7hat den Clan betreten");
+                            }
+                        });
                     });
                 });
             });

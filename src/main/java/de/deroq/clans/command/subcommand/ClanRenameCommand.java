@@ -59,11 +59,7 @@ public class ClanRenameCommand extends ClanSubCommand {
                         user.sendMessage("Du musst den Namen oder den Tag ändern");
                         return;
                     }
-                    ListenableFuture<Boolean> future = clanSystem.getClanManager().renameClan(
-                            currentClan,
-                            clanName,
-                            clanTag
-                    );
+                    ListenableFuture<Boolean> future = clanSystem.getClanManager().renameClan(currentClan, clanName, clanTag);
                     Callback.of(future, renamed -> {
                         if (renamed) {
                             currentClan.broadcast("Der Clan heißt nun §c" + clanName + " §7[§c" + clanTag + "§7]");

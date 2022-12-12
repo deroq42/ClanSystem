@@ -55,10 +55,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
                         user.sendMessage("Dieser Spieler ist nicht im Clan");
                         return;
                     }
-                    ListenableFuture<Clan.Group> groupFuture =  clanSystem.getClanManager().demoteUser(
-                            demotedUser,
-                            currentClan
-                    );
+                    ListenableFuture<Clan.Group> groupFuture =  clanSystem.getClanManager().demoteUser(demotedUser, currentClan);
                     Callback.of(groupFuture, group -> {
                         if (group == null) {
                             user.sendMessage("Dieser Spieler ist bereits Mitglied");

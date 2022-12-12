@@ -34,11 +34,7 @@ public class ClanLeaveCommand extends ClanSubCommand {
                 user.sendMessage("Nutze den Befehl /clan leave confirm");
                 return;
             }
-            ListenableFuture<Boolean> leaveFuture = clanSystem.getClanManager().leaveClan(
-                    clanSystem,
-                    user,
-                    currentClan
-            );
+            ListenableFuture<Boolean> leaveFuture = clanSystem.getClanManager().leaveClan(user, currentClan);
             Callback.of(leaveFuture, left -> {
                 if (left) {
                     user.sendMessage("Du hast den Clan verlassen");

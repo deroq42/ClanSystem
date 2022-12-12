@@ -1,7 +1,6 @@
 package de.deroq.clans.model;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import de.deroq.clans.model.Clan;
 import de.deroq.clans.user.AbstractUser;
 import lombok.Getter;
 
@@ -37,7 +36,9 @@ public interface AbstractClan {
 
     Collection<UUID> getOnlinePlayers();
 
-    Set<ListenableFuture<AbstractUser>> getUsersAsFuture();
+    Set<ListenableFuture<AbstractUser>> getMembersAsFuture();
+
+    Set<ListenableFuture<AbstractUser>> getOnlineLeadersAsFuture();
 
     UUID getClanId();
 

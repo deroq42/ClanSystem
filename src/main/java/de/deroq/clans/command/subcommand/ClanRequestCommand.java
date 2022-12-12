@@ -6,19 +6,17 @@ import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
-import de.deroq.clans.util.Pair;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
  * @author Miles
- * @since 10.12.2022
+ * @since 12.12.2022
  */
 @RequiredArgsConstructor
-public class ClanJoinCommand extends ClanSubCommand {
+public class ClanRequestCommand extends ClanSubCommand {
 
     private final ClanSystem clanSystem;
 
@@ -33,30 +31,23 @@ public class ClanJoinCommand extends ClanSubCommand {
                 user.sendMessage("Du bist bereits in einem Clan");
                 return;
             }
-            String name = args[0].toLowerCase();
+            String name = args[0];
             ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
             Callback.of(clanFuture, clan -> {
                 if (clan == null) {
                     user.sendMessage("Diesen Clan gibt es nicht");
                     return;
                 }
-                ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
-                Callback.of(invitesFuture, invites -> {
-                    Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
-                            .filter(clanUserPair -> clanUserPair.getKey().equals(clan.getClanId()))
-                            .findFirst();
-                    if (!optionalInvite.isPresent()) {
-                        user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
+                ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(clan);
+                Callback.of(requestsFuture, requests -> {
+                    if (requests.contains(user.getUuid())) {
+                        user.sendMessage("Du hast diesem Clan bereits eine Beitrittsanfrage gesendet");
                         return;
                     }
-                    if (clan.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
-                        user.sendMessage("Dieser Clan ist voll");
-                        return;
-                    }
-                    ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().joinClan(user, clan);
-                    Callback.of(joinFuture, joined -> {
-                        if (joined) {
-                            clan.broadcast("§c" + user.getName() + " §7hat den Clan betreten");
+                    ListenableFuture<Boolean> requestFuture = clanSystem.getRequestManager().sendRequest(clan, user, requests);
+                    Callback.of(requestFuture, requested -> {
+                        if (requested) {
+                            user.sendMessage("Du hast eine Beitrittsanfrage an den Clan §c" + clan.getClanName() + " §7gesendet");
                         }
                     });
                 });

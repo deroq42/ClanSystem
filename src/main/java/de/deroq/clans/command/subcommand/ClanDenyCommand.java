@@ -6,8 +6,10 @@ import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
+import de.deroq.clans.util.Pair;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,17 +35,16 @@ public class ClanDenyCommand extends ClanSubCommand {
                 user.sendMessage("Diesen Clan gibt es nicht");
                 return;
             }
-            ListenableFuture<Set<UUID>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
+            ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
             Callback.of(invitesFuture, invites -> {
-                if (!invites.contains(clan.getClanId())) {
+                Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
+                        .filter(clanUserPair -> clanUserPair.getKey().equals(clan.getClanId()))
+                        .findFirst();
+                if (!optionalInvite.isPresent()) {
                     user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
                     return;
                 }
-                ListenableFuture<Boolean> denyFuture = clanSystem.getClanManager().denyInvite(
-                        clanSystem,
-                        user,
-                        clan
-                );
+                ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyInvite(user, clan, invites);
                 Callback.of(denyFuture, denied -> {
                     if (denied) {
                         user.sendMessage("Du hast die Einladung vom Clan §c" + clan.getClanName() + " §7abgelehnt");

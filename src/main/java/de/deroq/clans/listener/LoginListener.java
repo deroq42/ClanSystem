@@ -27,7 +27,7 @@ public class LoginListener implements Listener {
         ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
         Callback.of(userFuture, user -> {
             if (user == null) {
-                clanSystem.getUserManager().createUser(clanSystem, uuid, name);
+                clanSystem.getUserManager().createUser(uuid, name);
                 clanSystem.getUserManager().cacheUuid(name, uuid);
             } else {
                 clanSystem.getUserManager().cacheOnlineUser(user);

@@ -16,8 +16,11 @@ import de.deroq.clans.listener.LoginListener;
 import de.deroq.clans.listener.PlayerDisconnectListener;
 import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.repository.ClanInviteRepository;
+import de.deroq.clans.repository.ClanRequestRepository;
 import de.deroq.clans.repository.UserRepository;
 import de.deroq.clans.repository.sql.ClanDataRepositorySQLImplementation;
+import de.deroq.clans.request.RequestManager;
+import de.deroq.clans.request.sql.ClanRequestRepositorySQLImplementation;
 import de.deroq.clans.user.sql.UserRepositorySQLImplementation;
 import de.deroq.clans.user.UserManager;
 import lombok.Getter;
@@ -64,6 +67,12 @@ public class ClanSystem extends Plugin {
 
     @Getter
     private InviteManager inviteManager;
+
+    @Getter
+    private ClanRequestRepository clanRequestRepository;
+
+    @Getter
+    private RequestManager requestManager;
 
     @Getter
     private final Map<String, ClanSubCommand> commandMap = new HashMap<>();
@@ -128,11 +137,13 @@ public class ClanSystem extends Plugin {
 
     private void makeInstances() {
         this.clanDataRepository = new ClanDataRepositorySQLImplementation(this).createTables();
-        this.clanManager = new ClanManager(clanDataRepository);
+        this.clanManager = new ClanManager(this, clanDataRepository);
         this.userRepository = new UserRepositorySQLImplementation(this).createTables();
-        this.userManager = new UserManager(userRepository);
+        this.userManager = new UserManager(this, userRepository);
         this.clanInviteRepository = new ClanInviteRepositorySQLImplementation(this).createTables();
-        this.inviteManager = new InviteManager(clanInviteRepository);
+        this.inviteManager = new InviteManager(this, clanInviteRepository);
+        this.clanRequestRepository = new ClanRequestRepositorySQLImplementation(this).createTable();
+        this.requestManager = new RequestManager(this, clanRequestRepository);
     }
 
     private void registerListeners() {
@@ -158,6 +169,9 @@ public class ClanSystem extends Plugin {
         getCommandMap().put("ninfo", new ClanNameInfoCommand(this));
         getCommandMap().put("uinfo", new ClanUserInfoCommand(this));
         getCommandMap().put("denyall", new ClanDenyAllCommand(this));
+        getCommandMap().put("request", new ClanRequestCommand(this));
+        getCommandMap().put("accept", new ClanAcceptCommand(this));
+        getCommandMap().put("decline", new ClanDeclineCommand(this));
     }
 
     public Config loadConfig(File file, Class<? extends Config> aClass) {

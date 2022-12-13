@@ -34,6 +34,8 @@ public interface AbstractClan {
 
     boolean containsUser(AbstractUser user);
 
+    boolean canKick(AbstractUser toKick, AbstractUser from);
+
     Collection<UUID> getOnlinePlayers();
 
     Set<ListenableFuture<AbstractUser>> getMembersAsFuture();

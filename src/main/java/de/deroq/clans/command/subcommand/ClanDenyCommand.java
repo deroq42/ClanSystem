@@ -30,24 +30,24 @@ public class ClanDenyCommand extends ClanSubCommand {
         }
         String name = args[0].toLowerCase();
         ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
-        Callback.of(clanFuture, clan -> {
-            if (clan == null) {
+        Callback.of(clanFuture, toDeny -> {
+            if (toDeny == null) {
                 user.sendMessage("Diesen Clan gibt es nicht");
                 return;
             }
             ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
             Callback.of(invitesFuture, invites -> {
                 Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
-                        .filter(clanUserPair -> clanUserPair.getKey().equals(clan.getClanId()))
+                        .filter(clanUserPair -> clanUserPair.getKey().equals(toDeny.getClanId()))
                         .findFirst();
                 if (!optionalInvite.isPresent()) {
                     user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
                     return;
                 }
-                ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyInvite(user, clan, invites);
+                ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyInvite(user, toDeny, invites);
                 Callback.of(denyFuture, denied -> {
                     if (denied) {
-                        user.sendMessage("Du hast die Einladung vom Clan §c" + clan.getClanName() + " §7abgelehnt");
+                        user.sendMessage("Du hast die Einladung vom Clan §c" + toDeny.getClanName() + " §7abgelehnt");
                     }
                 });
             });

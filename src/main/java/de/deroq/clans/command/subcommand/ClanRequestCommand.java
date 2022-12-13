@@ -33,21 +33,21 @@ public class ClanRequestCommand extends ClanSubCommand {
             }
             String name = args[0];
             ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
-            Callback.of(clanFuture, clan -> {
-                if (clan == null) {
+            Callback.of(clanFuture, toRequest -> {
+                if (toRequest == null) {
                     user.sendMessage("Diesen Clan gibt es nicht");
                     return;
                 }
-                ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(clan);
+                ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(toRequest);
                 Callback.of(requestsFuture, requests -> {
                     if (requests.contains(user.getUuid())) {
                         user.sendMessage("Du hast diesem Clan bereits eine Beitrittsanfrage gesendet");
                         return;
                     }
-                    ListenableFuture<Boolean> requestFuture = clanSystem.getRequestManager().sendRequest(clan, user, requests);
+                    ListenableFuture<Boolean> requestFuture = clanSystem.getRequestManager().sendRequest(toRequest, user, requests);
                     Callback.of(requestFuture, requested -> {
                         if (requested) {
-                            user.sendMessage("Du hast eine Beitrittsanfrage an den Clan §c" + clan.getClanName() + " §7gesendet");
+                            user.sendMessage("Du hast eine Beitrittsanfrage an den Clan §c" + toRequest.getClanName() + " §7gesendet");
                         }
                     });
                 });

@@ -7,31 +7,26 @@ import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Set;
 import java.util.UUID;
 
 /**
  * @author Miles
- * @since 12.12.2022
+ * @since 13.12.2022
  */
 @RequiredArgsConstructor
-public class ClanDeclineCommand extends ClanSubCommand {
+public class ClanKickCommand extends ClanSubCommand {
 
     private final ClanSystem clanSystem;
 
     @Override
     public void run(AbstractUser from, String[] args) {
-        if (args.length != 1) {
-            sendHelp(from);
-            return;
-        }
         Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
                 from.sendMessage("Du bist in keinem Clan");
                 return;
             }
-            if (!currentClan.isLeader(from)) {
-                from.sendMessage("Du bist kein Leader dieses Clans");
+            if (currentClan.isDefault(from)) {
+                from.sendMessage("Du kannst keine Spieler aus dem Clan werfen");
                 return;
             }
             String name = args[0];
@@ -42,23 +37,25 @@ public class ClanDeclineCommand extends ClanSubCommand {
                     return;
                 }
                 ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
-                Callback.of(userFuture, toDecline -> {
-                    if (toDecline == null) {
+                Callback.of(userFuture, toKick -> {
+                    if (toKick == null) {
                         from.sendMessage("Spieler konnte nicht gefunden werden");
                         return;
                     }
-                    ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
-                    Callback.of(requestsFuture, requests -> {
-                        if (!requests.contains(toDecline.getUuid())) {
-                            from.sendMessage("Dieser Spieler hat keine Beitrittsanfrage gesendet");
-                            return;
+                    if (!currentClan.containsUser(toKick)) {
+                        from.sendMessage("Dieser Spieler ist nicht im Clan");
+                        return;
+                    }
+                    if (!currentClan.canKick(toKick, from)) {
+                        from.sendMessage("Du kannst diesen Spieler nicht aus dem Clan werfen");
+                        return;
+                    }
+                    ListenableFuture<Boolean> kickFuture = clanSystem.getClanManager().leaveClan(toKick, currentClan);
+                    Callback.of(kickFuture, kicked -> {
+                        if (kicked) {
+                            toKick.sendMessage("Du wurdest von §c" + from.getName() + " §7aus dem Clan geworfen");
+                            currentClan.broadcast("§c" + from.getName() + " §7hat §c" + toKick.getName() + " §7aus dem Clan geworfen");
                         }
-                        ListenableFuture<Boolean> declineFuture = clanSystem.getRequestManager().declineRequest(toDecline, currentClan, requests);
-                        Callback.of(declineFuture, declined -> {
-                            if (declined) {
-                                toDecline.sendMessage("Deine Beitrittsanfrage an den Clan §c" + currentClan.getClanName() + " §7wurde abgelehnt");
-                            }
-                        });
                     });
                 });
             });

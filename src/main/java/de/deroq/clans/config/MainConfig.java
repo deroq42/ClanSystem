@@ -11,7 +11,7 @@ import java.io.File;
 public class MainConfig extends Config {
 
     @Getter
-    private int clanPlayerLimit = 1394;
+    private int clanPlayerLimit = 30;
 
     public MainConfig(File file) {
         super(file);

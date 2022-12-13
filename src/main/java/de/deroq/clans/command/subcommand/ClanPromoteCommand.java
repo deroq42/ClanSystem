@@ -40,27 +40,27 @@ public class ClanPromoteCommand extends ClanSubCommand {
                 return;
             }
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
-            Callback.of(uuidFuture, targetPlayer -> {
-                if (targetPlayer == null) {
+            Callback.of(uuidFuture, uuid -> {
+                if (uuid == null) {
                     user.sendMessage("Spieler konnte nicht gefunden werden");
                     return;
                 }
-                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
-                Callback.of(userFuture, promotedUser -> {
-                    if (promotedUser == null) {
+                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+                Callback.of(userFuture, toPromote -> {
+                    if (toPromote == null) {
                         user.sendMessage("Spieler konnte nicht gefunden werden");
                         return;
                     }
-                    if (!currentClan.containsUser(promotedUser)) {
+                    if (!currentClan.containsUser(toPromote)) {
                         user.sendMessage("Dieser Spieler ist nicht im Clan");
                         return;
                     }
-                    ListenableFuture<AbstractClan.Group> groupFuture =  clanSystem.getClanManager().promoteUser(promotedUser, currentClan);
+                    ListenableFuture<AbstractClan.Group> groupFuture =  clanSystem.getClanManager().promoteUser(toPromote, currentClan);
                     Callback.of(groupFuture, group -> {
                         if (group == null) {
                             user.sendMessage("Dieser Spieler ist bereits Leader");
                         } else {
-                            currentClan.broadcast("§c" + promotedUser.getName() + " §7ist nun §c" + group.getText());
+                            currentClan.broadcast("§c" + toPromote.getName() + " §7ist nun §c" + group.getText());
                         }
                     });
                 });

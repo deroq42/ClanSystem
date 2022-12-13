@@ -40,27 +40,27 @@ public class ClanDemoteCommand extends ClanSubCommand {
                 return;
             }
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
-            Callback.of(uuidFuture, targetPlayer -> {
-                if (targetPlayer == null) {
+            Callback.of(uuidFuture, uuid -> {
+                if (uuid == null) {
                     user.sendMessage("Spieler konnte nicht gefunden werden");
                     return;
                 }
-                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
-                Callback.of(userFuture, demotedUser -> {
-                    if (demotedUser == null) {
+                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+                Callback.of(userFuture, toDemote -> {
+                    if (toDemote == null) {
                         user.sendMessage("Spieler konnte nicht gefunden werden");
                         return;
                     }
-                    if (!currentClan.containsUser(demotedUser)) {
+                    if (!currentClan.containsUser(toDemote)) {
                         user.sendMessage("Dieser Spieler ist nicht im Clan");
                         return;
                     }
-                    ListenableFuture<Clan.Group> groupFuture =  clanSystem.getClanManager().demoteUser(demotedUser, currentClan);
+                    ListenableFuture<Clan.Group> groupFuture =  clanSystem.getClanManager().demoteUser(toDemote, currentClan);
                     Callback.of(groupFuture, group -> {
                         if (group == null) {
                             user.sendMessage("Dieser Spieler ist bereits Mitglied");
                         } else {
-                            currentClan.broadcast("§c" + demotedUser.getName() + " §7ist nun §c" + group.getText());
+                            currentClan.broadcast("§c" + toDemote.getName() + " §7ist nun §c" + group.getText());
                         }
                     });
                 });

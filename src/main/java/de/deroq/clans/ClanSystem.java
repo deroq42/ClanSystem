@@ -177,6 +177,7 @@ public class ClanSystem extends Plugin {
         getCommandMap().put("requests", new ClanRequestsCommand(this));
         getCommandMap().put("acceptall", new ClanAcceptAllCommand(this));
         getCommandMap().put("declineall", new ClanDeclineAllCommand(this));
+        getCommandMap().put("kick", new ClanKickCommand(this));
     }
 
     public Config loadConfig(File file, Class<? extends Config> aClass) {

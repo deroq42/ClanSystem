@@ -124,6 +124,11 @@ public class Clan implements AbstractClan {
     }
 
     @Override
+    public boolean canKick(AbstractUser toKick, AbstractUser from) {
+        return getGroup(toKick).getId() < getGroup(from).getId();
+    }
+
+    @Override
     public Collection<UUID> getOnlinePlayers() {
         return members.keySet()
                 .stream()

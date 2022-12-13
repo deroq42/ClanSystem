@@ -51,7 +51,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
         this.clanSystem = clanSystem;
         this.mySQL = clanSystem.getDatabaseConnector().getMySQL();
         // clans table
-        this.createClansTable = "CREATE TABLE IF NOT EXISTS clans(id VARCHAR(36), clanname VARCHAR(16), clantag VARCHAR(5), members VARCHAR(65535), PRIMARY KEY(id))";
+        this.createClansTable = "CREATE TABLE IF NOT EXISTS clans(id VARCHAR(36), clanname VARCHAR(16), clantag VARCHAR(5), members TEXT, PRIMARY KEY(id))";
         this.insertClan = "INSERT INTO clans(id, clanname, clantag, members) VALUES (?, ?, ?, ?)";
         this.deleteClan = "DELETE FROM clans WHERE id = ?";
         this.selectClanById = "SELECT * FROM clans WHERE id = ?";

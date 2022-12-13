@@ -20,47 +20,47 @@ public class ClanAcceptCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(AbstractUser user, String[] args) {
+    public void run(AbstractUser from, String[] args) {
         if (args.length != 1) {
-            sendHelp(user);
+            sendHelp(from);
             return;
         }
-        Callback.of(user.getClan(), currentClan -> {
+        Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                from.sendMessage("Du bist in keinem Clan");
                 return;
             }
-            if (!currentClan.isLeader(user)) {
-                user.sendMessage("Du bist kein Leader dieses Clans");
+            if (!currentClan.isLeader(from)) {
+                from.sendMessage("Du bist kein Leader dieses Clans");
                 return;
             }
             String name = args[0];
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
-            Callback.of(uuidFuture, targetPlayer -> {
-                if (targetPlayer == null) {
-                    user.sendMessage("Spieler konnte nicht gefunden werden");
+            Callback.of(uuidFuture, uuid -> {
+                if (uuid == null) {
+                    from.sendMessage("Spieler konnte nicht gefunden werden");
                     return;
                 }
-                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(targetPlayer);
-                Callback.of(userFuture, requestedUser -> {
-                    if (requestedUser == null) {
-                        user.sendMessage("Spieler konnte nicht gefunden werden");
+                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+                Callback.of(userFuture, toAccept -> {
+                    if (toAccept == null) {
+                        from.sendMessage("Spieler konnte nicht gefunden werden");
                         return;
                     }
                     ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
                     Callback.of(requestsFuture, requests -> {
-                        if (!requests.contains(requestedUser.getUuid())) {
-                            user.sendMessage("Dieser Spieler hat keine Beitrittsanfrage gesendet");
+                        if (!requests.contains(toAccept.getUuid())) {
+                            from.sendMessage("Dieser Spieler hat keine Beitrittsanfrage gesendet");
                             return;
                         }
                         if (currentClan.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
-                            user.sendMessage("Dieser Clan ist voll");
+                            from.sendMessage("Dieser Clan ist voll");
                             return;
                         }
-                        ListenableFuture<Boolean> acceptFuture = clanSystem.getRequestManager().acceptRequest(requestedUser, user, currentClan, requests);
+                        ListenableFuture<Boolean> acceptFuture = clanSystem.getRequestManager().acceptRequest(toAccept, currentClan, requests);
                         Callback.of(acceptFuture, accepted -> {
                             if (accepted) {
-                                currentClan.broadcast("§c" + requestedUser.getName() + " §7hat den Clan betreten");
+                                currentClan.broadcast("§c" + toAccept.getName() + " §7hat den Clan betreten");
                             }
                         });
                     });

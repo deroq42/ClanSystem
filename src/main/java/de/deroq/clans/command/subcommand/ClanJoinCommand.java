@@ -35,28 +35,28 @@ public class ClanJoinCommand extends ClanSubCommand {
             }
             String name = args[0].toLowerCase();
             ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
-            Callback.of(clanFuture, clan -> {
-                if (clan == null) {
+            Callback.of(clanFuture, toJoin -> {
+                if (toJoin == null) {
                     user.sendMessage("Diesen Clan gibt es nicht");
                     return;
                 }
                 ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
                 Callback.of(invitesFuture, invites -> {
                     Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
-                            .filter(clanUserPair -> clanUserPair.getKey().equals(clan.getClanId()))
+                            .filter(clanUserPair -> clanUserPair.getKey().equals(toJoin.getClanId()))
                             .findFirst();
                     if (!optionalInvite.isPresent()) {
                         user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
                         return;
                     }
-                    if (clan.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
+                    if (toJoin.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
                         user.sendMessage("Dieser Clan ist voll");
                         return;
                     }
-                    ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().joinClan(user, clan);
+                    ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().joinClan(user, toJoin);
                     Callback.of(joinFuture, joined -> {
                         if (joined) {
-                            clan.broadcast("§c" + user.getName() + " §7hat den Clan betreten");
+                            toJoin.broadcast("§c" + user.getName() + " §7hat den Clan betreten");
                         }
                     });
                 });

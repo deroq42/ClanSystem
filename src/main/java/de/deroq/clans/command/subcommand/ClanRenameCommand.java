@@ -41,21 +41,24 @@ public class ClanRenameCommand extends ClanSubCommand {
                 user.sendMessage("Dein Tag darf keine Sonderzeichen haben und muss zwischen 2 und 5 Zeichen lang sein");
                 return;
             }
-            Callback.of(clanSystem.getClanManager().isNameAvailable(clanName), isNameAvailable -> {
+            ListenableFuture<Boolean> nameFuture = clanSystem.getClanManager().isNameAvailable(clanName);
+            Callback.of(nameFuture, nameAvailable -> {
                 if (!clanName.equalsIgnoreCase(currentClan.getClanName())) {
-                    if (!isNameAvailable) {
+                    if (!nameAvailable) {
                         user.sendMessage("Es gibt bereits einen Clan mit diesem Namen");
                         return;
                     }
                 }
-                Callback.of(clanSystem.getClanManager().isTagAvailable(clanTag), isTagAvailable -> {
+                ListenableFuture<Boolean> tagFuture = clanSystem.getClanManager().isTagAvailable(clanTag);
+                Callback.of(tagFuture, tagAvailable -> {
                     if (!clanTag.equalsIgnoreCase(currentClan.getClanTag())) {
-                        if (!isTagAvailable) {
+                        if (!tagAvailable) {
                             user.sendMessage("Es gibt bereits einen Clan mit diesem Tag");
                             return;
                         }
                     }
-                    if (clanName.equals(currentClan.getClanName()) && clanTag.equals(currentClan.getClanTag())) {
+                    if (clanName.equals(currentClan.getClanName())
+                            && clanTag.equals(currentClan.getClanTag())) {
                         user.sendMessage("Du musst den Namen oder den Tag ändern");
                         return;
                     }

@@ -33,10 +33,13 @@ public abstract class ClanSubCommand {
         user.sendMessage("/clan tinfo <tag>");
         user.sendMessage("/clan ninfo <name>");
         user.sendMessage("/clan uinfo <player>");
-        user.sendMessage("/clan denyall");
+        user.sendMessage("/clan denyAll");
         user.sendMessage("/clan request <clan>");
         user.sendMessage("/clan accept <player>");
         user.sendMessage("/clan decline <player>");
+        user.sendMessage("/clan acceptAll");
+        user.sendMessage("/clan declineAll");
+        user.sendMessage("/clan kick <player>");
         user.sendMessage("/cc <message>");
     }
 

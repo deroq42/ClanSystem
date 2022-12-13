@@ -44,10 +44,10 @@ public class ClanInviteRepositorySQLImplementation implements ClanInviteReposito
     }
 
     @Override
-    public ListenableFuture<Boolean> insertInvite(UUID invited, UUID clan, UUID inviter) {
+    public ListenableFuture<Boolean> insertInvite(UUID toInvite, UUID clan, UUID from) {
         return mySQL.update(
                 insertInvite,
-                invited.toString(), clan.toString(), inviter.toString()
+                toInvite.toString(), clan.toString(), from.toString()
         );
     }
 
@@ -85,8 +85,8 @@ public class ClanInviteRepositorySQLImplementation implements ClanInviteReposito
                 Set<Pair<UUID, UUID>> invites = new HashSet<>();
                 while (resultSet.next()) {
                     UUID clan = UUID.fromString(resultSet.getString("clan"));
-                    UUID inviter = UUID.fromString(resultSet.getString("inviter"));
-                    invites.add(Pair.of(clan, inviter));
+                    UUID from = UUID.fromString(resultSet.getString("inviter"));
+                    invites.add(Pair.of(clan, from));
                 }
                 return invites;
             } catch (SQLException e) {

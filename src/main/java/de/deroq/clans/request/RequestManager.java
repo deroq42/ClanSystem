@@ -46,18 +46,12 @@ public class RequestManager {
         return repository.insertRequest(clan, user);
     }
 
-    public ListenableFuture<Boolean> acceptRequest(AbstractUser accepted, AbstractUser from, AbstractClan clan, Set<UUID> requests) {
-        for (ListenableFuture<AbstractUser> userFuture : clan.getOnlineLeadersAsFuture()) {
-            Callback.of(userFuture, leader -> leader.sendMessage("§c" + from.getName() + " §7hat die Beitrittsanfrage von §c" + accepted.getName() + " §7angenommen"));
-        }
+    public ListenableFuture<Boolean> acceptRequest(AbstractUser accepted, AbstractClan clan, Set<UUID> requests) {
         removeRequest(accepted, clan, requests);
         return clanSystem.getClanManager().joinClan(accepted, clan);
     }
 
-    public ListenableFuture<Boolean> declineRequest(AbstractUser declined, AbstractUser from, AbstractClan clan, Set<UUID> requests) {
-        for (ListenableFuture<AbstractUser> userFuture : clan.getOnlineLeadersAsFuture()) {
-            Callback.of(userFuture, leader -> leader.sendMessage("§c" + from.getName() + " §7hat die Beitrittsanfrage von §c" + declined.getName() + " §7abgelehnt"));
-        }
+    public ListenableFuture<Boolean> declineRequest(AbstractUser declined, AbstractClan clan, Set<UUID> requests) {
         return removeRequest(declined, clan, requests);
     }
 

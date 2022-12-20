@@ -22,45 +22,45 @@ public class ClanAcceptCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser from, String[] args) {
         if (args.length != 1) {
-            sendHelp(from);
+            sendHelp(from, 3);
             return;
         }
         Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
-                from.sendMessage("Du bist in keinem Clan");
+                from.sendMessage("no-clan");
                 return;
             }
             if (!currentClan.isLeader(from)) {
-                from.sendMessage("Du bist kein Leader dieses Clans");
+                from.sendMessage("not-leader-of-clan");
                 return;
             }
             String name = args[0];
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
             Callback.of(uuidFuture, uuid -> {
                 if (uuid == null) {
-                    from.sendMessage("Spieler konnte nicht gefunden werden");
+                    from.sendMessage("user-not-found");
                     return;
                 }
                 ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
                 Callback.of(userFuture, toAccept -> {
                     if (toAccept == null) {
-                        from.sendMessage("Spieler konnte nicht gefunden werden");
+                        from.sendMessage("user-not-found");
                         return;
                     }
                     ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
                     Callback.of(requestsFuture, requests -> {
                         if (!requests.contains(toAccept.getUuid())) {
-                            from.sendMessage("Dieser Spieler hat keine Beitrittsanfrage gesendet");
+                            from.sendMessage("requests-user-didnt-request");
                             return;
                         }
                         if (currentClan.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
-                            from.sendMessage("Dieser Clan ist voll");
+                            from.sendMessage("clan-already-full");
                             return;
                         }
                         ListenableFuture<Boolean> acceptFuture = clanSystem.getRequestManager().acceptRequest(toAccept, currentClan, requests);
                         Callback.of(acceptFuture, accepted -> {
                             if (accepted) {
-                                currentClan.broadcast("§c" + toAccept.getName() + " §7hat den Clan betreten");
+                                currentClan.broadcast("clan-join", toAccept.getName());
                             }
                         });
                     });

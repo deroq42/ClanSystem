@@ -19,7 +19,7 @@ public class ClanInfoCommand extends ClanSubCommand {
     public void run(AbstractUser user, String[] args) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             sendInfo(clanSystem, user, currentClan, true);

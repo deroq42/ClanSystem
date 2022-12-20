@@ -25,19 +25,19 @@ public class ClanJoinCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser user, String[] args) {
         if (args.length != 1) {
-            sendHelp(user);
+            sendHelp(user, 1);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan != null) {
-                user.sendMessage("Du bist bereits in einem Clan");
+                user.sendMessage("already-in-clan");
                 return;
             }
             String name = args[0].toLowerCase();
             ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
             Callback.of(clanFuture, toJoin -> {
                 if (toJoin == null) {
-                    user.sendMessage("Diesen Clan gibt es nicht");
+                    user.sendMessage("clan-not-found");
                     return;
                 }
                 ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
@@ -46,17 +46,17 @@ public class ClanJoinCommand extends ClanSubCommand {
                             .filter(clanUserPair -> clanUserPair.getKey().equals(toJoin.getClanId()))
                             .findFirst();
                     if (!optionalInvite.isPresent()) {
-                        user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
+                        user.sendMessage("invites-clan-didnt-invite");
                         return;
                     }
                     if (toJoin.getMembers().size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
-                        user.sendMessage("Dieser Clan ist voll");
+                        user.sendMessage("clan-already-full");
                         return;
                     }
                     ListenableFuture<Boolean> joinFuture = clanSystem.getClanManager().joinClan(user, toJoin);
                     Callback.of(joinFuture, joined -> {
                         if (joined) {
-                            toJoin.broadcast("§c" + user.getName() + " §7hat den Clan betreten");
+                            toJoin.broadcast("clan-join", user.getName());
                         }
                     });
                 });

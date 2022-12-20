@@ -20,7 +20,7 @@ public class ClanCreateCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser user, String[] args) {
         if (args.length != 2) {
-            sendHelp(user);
+            sendHelp(user, 1);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
@@ -31,32 +31,32 @@ public class ClanCreateCommand extends ClanSubCommand {
             String clanName = args[0];
             String clanTag = args[1];
             if (!ClanSystem.VALID_CLAN_NAMES.matcher(clanName).matches()) {
-                user.sendMessage("Dein Name darf keine Sonderzeichen haben und muss zwischen 3 und 16 Zeichen lang sein");
+                user.sendMessage("clan-name-invalid");
                 return;
             }
             if (!ClanSystem.VALID_CLAN_TAGS.matcher(clanTag).matches()) {
-                user.sendMessage("Dein Tag darf keine Sonderzeichen haben und muss zwischen 2 und 5 Zeichen lang sein");
+                user.sendMessage("clan-tag-invalid");
                 return;
             }
             ListenableFuture<Boolean> nameFuture = clanSystem.getClanManager().isNameAvailable(clanName);
             Callback.of(nameFuture, isNameAvailable -> {
                 if (!isNameAvailable) {
-                    user.sendMessage("Es gibt bereits einen Clan mit diesem Namen");
+                    user.sendMessage("clan-name-unavailable");
                     return;
                 }
                 ListenableFuture<Boolean> tagFuture = clanSystem.getClanManager().isTagAvailable(clanTag);
                 Callback.of(tagFuture, isTagAvailable -> {
                     if (!isTagAvailable) {
-                        user.sendMessage("Es gibt bereits einen Clan mit diesem Tag");
+                        user.sendMessage("clan-tag-unavailable");
                         return;
                     }
                     ListenableFuture<AbstractClan> createClan = clanSystem.getClanManager().createClan(user, clanName, clanTag);
                     Callback.of(createClan, createdClan -> {
                         if (createdClan == null) {
-                            user.sendMessage("Clan konnte nicht erstellt werden");
+                            user.sendMessage("clan-create-error");
                             return;
                         }
-                        user.sendMessage("Der Clan §c" + clanName + " §7[§c" + clanTag + "§7] wurde erstellt");
+                        user.sendMessage("clan-create", clanName, clanTag);
                     });
                 });
             });

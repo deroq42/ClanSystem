@@ -36,7 +36,7 @@ public class ClanChatCommand extends Command {
         }
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             StringBuilder messageBuilder = new StringBuilder();

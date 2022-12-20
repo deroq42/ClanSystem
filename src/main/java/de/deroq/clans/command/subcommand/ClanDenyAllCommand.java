@@ -25,13 +25,13 @@ public class ClanDenyAllCommand extends ClanSubCommand {
         ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
         Callback.of(invitesFuture, invites -> {
             if (invites.isEmpty()) {
-                user.sendMessage("Du hast keine offenen Einladungen");
+                user.sendMessage("invites-no-remaining");
                 return;
             }
             ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyAllInvites(user, invites);
             Callback.of(denyFuture, denied -> {
                 if (denied) {
-                    user.sendMessage("Du hast alle offenen Einladungen abgelehnt");
+                    user.sendMessage("invites-denied-all");
                 }
             });
         });

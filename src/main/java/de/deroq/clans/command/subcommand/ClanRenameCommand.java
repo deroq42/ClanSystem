@@ -19,33 +19,33 @@ public class ClanRenameCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser user, String[] args) {
         if (args.length != 2) {
-            sendHelp(user);
+            sendHelp(user, 1);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             if (currentClan.isLeader(user)) {
-                user.sendMessage("Du bist kein Leader dieses Clans");
+                user.sendMessage("not-leader-of-clan");
                 return;
             }
             String clanName = args[0];
             String clanTag = args[1];
             if (!ClanSystem.VALID_CLAN_NAMES.matcher(clanName).matches()) {
-                user.sendMessage("Dein Name darf keine Sonderzeichen haben und muss zwischen 3 und 16 Zeichen lang sein");
+                user.sendMessage("clan-name-invalid");
                 return;
             }
             if (!ClanSystem.VALID_CLAN_TAGS.matcher(clanTag).matches()) {
-                user.sendMessage("Dein Tag darf keine Sonderzeichen haben und muss zwischen 2 und 5 Zeichen lang sein");
+                user.sendMessage("clan-tag-invalid");
                 return;
             }
             ListenableFuture<Boolean> nameFuture = clanSystem.getClanManager().isNameAvailable(clanName);
             Callback.of(nameFuture, nameAvailable -> {
                 if (!clanName.equalsIgnoreCase(currentClan.getClanName())) {
                     if (!nameAvailable) {
-                        user.sendMessage("Es gibt bereits einen Clan mit diesem Namen");
+                        user.sendMessage("clan-name-unavailable");
                         return;
                     }
                 }
@@ -53,19 +53,19 @@ public class ClanRenameCommand extends ClanSubCommand {
                 Callback.of(tagFuture, tagAvailable -> {
                     if (!clanTag.equalsIgnoreCase(currentClan.getClanTag())) {
                         if (!tagAvailable) {
-                            user.sendMessage("Es gibt bereits einen Clan mit diesem Tag");
+                            user.sendMessage("clan-tag-unavailable");
                             return;
                         }
                     }
                     if (clanName.equals(currentClan.getClanName())
                             && clanTag.equals(currentClan.getClanTag())) {
-                        user.sendMessage("Du musst den Namen oder den Tag ändern");
+                        user.sendMessage("clan-rename-error");
                         return;
                     }
                     ListenableFuture<Boolean> future = clanSystem.getClanManager().renameClan(currentClan, clanName, clanTag);
                     Callback.of(future, renamed -> {
                         if (renamed) {
-                            currentClan.broadcast("Der Clan heißt nun §c" + clanName + " §7[§c" + clanTag + "§7]");
+                            currentClan.broadcast("clan-rename", clanName, clanTag);
                         }
                     });
                 });

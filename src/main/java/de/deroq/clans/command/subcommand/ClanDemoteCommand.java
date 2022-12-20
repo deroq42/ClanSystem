@@ -22,45 +22,45 @@ public class ClanDemoteCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser user, String[] args) {
         if (args.length != 1) {
-            sendHelp(user);
+            sendHelp(user, 2);
             return;
         }
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             if (!currentClan.isLeader(user)) {
-                user.sendMessage("Du bist kein Leader dieses Clans");
+                user.sendMessage("not-leader-of-clan");
                 return;
             }
             String name = args[0];
             if (name.equalsIgnoreCase(user.getName())) {
-                user.sendMessage("Du kannst nicht mit dir selber interagieren");
+                user.sendMessage("interact-yourself");
                 return;
             }
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
             Callback.of(uuidFuture, uuid -> {
                 if (uuid == null) {
-                    user.sendMessage("Spieler konnte nicht gefunden werden");
+                    user.sendMessage("user-not-found");
                     return;
                 }
                 ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
                 Callback.of(userFuture, toDemote -> {
                     if (toDemote == null) {
-                        user.sendMessage("Spieler konnte nicht gefunden werden");
+                        user.sendMessage("user-not-found");
                         return;
                     }
                     if (!currentClan.containsUser(toDemote)) {
-                        user.sendMessage("Dieser Spieler ist nicht im Clan");
+                        user.sendMessage("user-not-in-clan");
                         return;
                     }
-                    ListenableFuture<Clan.Group> groupFuture =  clanSystem.getClanManager().demoteUser(toDemote, currentClan);
+                    ListenableFuture<Clan.Group> groupFuture = clanSystem.getClanManager().demoteUser(toDemote, currentClan);
                     Callback.of(groupFuture, group -> {
                         if (group == null) {
-                            user.sendMessage("Dieser Spieler ist bereits Mitglied");
+                            user.sendMessage("user-already-member");
                         } else {
-                            currentClan.broadcast("§c" + toDemote.getName() + " §7ist nun §c" + group.getText());
+                            currentClan.broadcast("clan-group-change", toDemote.getName(), group.getText());
                         }
                     });
                 });

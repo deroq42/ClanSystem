@@ -21,24 +21,24 @@ public class ClanLeaveCommand extends ClanSubCommand {
     public void run(AbstractUser user, String[] args) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             if (currentClan.isLeader(user)) {
                 if (currentClan.getInfo().getUsersWithGroup(Clan.Group.LEADER).size() == 1) {
-                    user.sendMessage("Du kannst den Clan nicht verlassen, da du der einzige Leader bist");
+                    user.sendMessage("clan-sole-leader");
                     return;
                 }
             }
             if (args.length == 0 || !args[0].equalsIgnoreCase("confirm")) {
-                user.sendMessage("Nutze den Befehl /clan leave confirm");
+                user.sendMessage("clan-leave-confirm");
                 return;
             }
             ListenableFuture<Boolean> leaveFuture = clanSystem.getClanManager().leaveClan(user, currentClan);
             Callback.of(leaveFuture, left -> {
                 if (left) {
-                    user.sendMessage("Du hast den Clan verlassen");
-                    currentClan.broadcast("§c" + user.getName() + " §7hat den Clan verlassen");
+                    user.sendMessage("clan-you-left");
+                    currentClan.broadcast("clan-leave", user.getName());
                 }
             });
         });

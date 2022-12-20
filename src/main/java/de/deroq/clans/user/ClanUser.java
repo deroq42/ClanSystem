@@ -11,6 +11,7 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -31,10 +32,15 @@ public class ClanUser implements AbstractUser {
     @Setter
     private UUID clan;
 
+    @Getter
+    @Setter
+    private Locale locale;
+
     @Override
-    public void sendMessage(String message) {
+    public void sendMessage(String translationKey, Object... objects) {
         if (getPlayer() != null) {
-            getPlayer().sendMessage(TextComponent.fromLegacyText(ClanSystem.PREFIX + message));
+            String translation = clanSystem.getLanguageManager().translate(locale, translationKey, objects);
+            getPlayer().sendMessage(TextComponent.fromLegacyText(translation));
         }
     }
 
@@ -43,6 +49,11 @@ public class ClanUser implements AbstractUser {
         if (getPlayer() != null) {
             getPlayer().sendMessage(textComponent);
         }
+    }
+
+    @Override
+    public String translate(String translationKey, Object... objects) {
+        return clanSystem.getLanguageManager().translate(locale, translationKey, objects);
     }
 
     @Override

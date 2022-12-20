@@ -24,7 +24,7 @@ public interface AbstractClan {
 
     void chat(AbstractUser user, String message);
 
-    void broadcast(String message);
+    void broadcast(String translationKey, Object... objects);
 
     Clan.Group getGroup(AbstractUser user);
 
@@ -36,7 +36,7 @@ public interface AbstractClan {
 
     boolean canKick(AbstractUser toKick, AbstractUser from);
 
-    Collection<UUID> getOnlinePlayers();
+    Collection<AbstractUser> getOnlinePlayers();
 
     Set<ListenableFuture<AbstractUser>> getMembersAsFuture();
 

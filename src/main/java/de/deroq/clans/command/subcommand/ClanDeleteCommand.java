@@ -20,21 +20,21 @@ public class ClanDeleteCommand extends ClanSubCommand {
     public void run(AbstractUser user, String[] args) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             if (!currentClan.isLeader(user)) {
-                user.sendMessage("Du bist kein Leader dieses Clans");
+                user.sendMessage("not-leader-of-clan");
                 return;
             }
-            if (args.length == 0 || args[0].equalsIgnoreCase("confirm")) {
-                user.sendMessage("Nutze den Befehl /clan delete confirm");
+            if (args.length == 0 || !args[0].equalsIgnoreCase("confirm")) {
+                user.sendMessage("clan-delete-confirm");
                 return;
             }
             ListenableFuture<Boolean> future = clanSystem.getClanManager().deleteClan(currentClan);
             Callback.of(future, deleted -> {
                 if (deleted) {
-                    currentClan.broadcast("Der Clan wurde gelöscht");
+                    currentClan.broadcast("clan-deleted");
                 }
             });
         });

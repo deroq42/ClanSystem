@@ -1,67 +1,28 @@
 package de.deroq.clans.request;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import de.deroq.clans.ClanSystem;
 import de.deroq.clans.model.AbstractClan;
-import de.deroq.clans.repository.ClanRequestRepository;
 import de.deroq.clans.user.AbstractUser;
-import de.deroq.clans.util.Callback;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Miles
- * @since 12.12.2022
+ * @since 19.12.2022
  */
-@RequiredArgsConstructor
-public class RequestManager {
+public interface RequestManager {
 
-    private final ClanSystem clanSystem;
-    private final ClanRequestRepository repository;
+    ListenableFuture<Boolean> sendRequest(AbstractClan clan, AbstractUser user, Set<UUID> requests);
 
-    @Getter
-    private final LoadingCache<UUID, ListenableFuture<Set<UUID>>> requestCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(30, TimeUnit.MINUTES)
-            .build(new CacheLoader<UUID, ListenableFuture<Set<UUID>>>() {
-                @Override
-                public ListenableFuture<Set<UUID>> load(UUID clan) {
-                    return repository.getRequests(clan);
-                }
-            });
+    ListenableFuture<Boolean> acceptRequest(AbstractUser accepted, AbstractClan clan, Set<UUID> requests);
 
-    public ListenableFuture<Boolean> sendRequest(AbstractClan clan, AbstractUser user, Set<UUID> requests) {
-        for (ListenableFuture<AbstractUser> userFuture : clan.getOnlineLeadersAsFuture()) {
-            Callback.of(userFuture, leader -> leader.sendMessage("§c" + user.getName() + " §7hat eine Beitrittsanfrage gesendet"));
-        }
-        requests.add(user.getUuid());
-        requestCache.put(clan.getClanId(), Futures.immediateFuture(requests));
-        return repository.insertRequest(clan, user);
-    }
+    ListenableFuture<Boolean> declineRequest(AbstractUser declined, AbstractClan clan, Set<UUID> requests);
 
-    public ListenableFuture<Boolean> acceptRequest(AbstractUser accepted, AbstractClan clan, Set<UUID> requests) {
-        removeRequest(accepted, clan, requests);
-        return clanSystem.getClanManager().joinClan(accepted, clan);
-    }
+    ListenableFuture<Boolean> removeRequest(AbstractUser user, AbstractClan clan, Set<UUID> requests);
 
-    public ListenableFuture<Boolean> declineRequest(AbstractUser declined, AbstractClan clan, Set<UUID> requests) {
-        return removeRequest(declined, clan, requests);
-    }
+    ListenableFuture<Set<UUID>> getRequests(AbstractClan clan);
 
-    public ListenableFuture<Boolean> removeRequest(AbstractUser user, AbstractClan clan, Set<UUID> requests) {
-        requests.remove(user.getUuid());
-        requestCache.put(user.getUuid(), Futures.immediateFuture(requests));
-        return repository.deleteRequest(clan, user);
-    }
-
-    public ListenableFuture<Set<UUID>> getRequests(AbstractClan clan) {
-        return requestCache.getUnchecked(clan.getClanId());
-    }
+    LoadingCache<UUID, ListenableFuture<Set<UUID>>> getRequestCache();
 }

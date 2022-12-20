@@ -20,41 +20,45 @@ public class ClanKickCommand extends ClanSubCommand {
 
     @Override
     public void run(AbstractUser from, String[] args) {
+        if (args.length != 1) {
+            sendHelp(from, 2);
+            return;
+        }
         Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
-                from.sendMessage("Du bist in keinem Clan");
+                from.sendMessage("no-clan");
                 return;
             }
             if (currentClan.isDefault(from)) {
-                from.sendMessage("Du kannst keine Spieler aus dem Clan werfen");
+                from.sendMessage("clan-cant-kick");
                 return;
             }
             String name = args[0];
             ListenableFuture<UUID> uuidFuture = clanSystem.getUserManager().getUUID(name);
             Callback.of(uuidFuture, uuid -> {
                 if (uuid == null) {
-                    from.sendMessage("Spieler konnte nicht gefunden werden");
+                    from.sendMessage("user-not-found");
                     return;
                 }
                 ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
                 Callback.of(userFuture, toKick -> {
                     if (toKick == null) {
-                        from.sendMessage("Spieler konnte nicht gefunden werden");
+                        from.sendMessage("user-not-found");
                         return;
                     }
                     if (!currentClan.containsUser(toKick)) {
-                        from.sendMessage("Dieser Spieler ist nicht im Clan");
+                        from.sendMessage("user-not-in-clan");
                         return;
                     }
                     if (!currentClan.canKick(toKick, from)) {
-                        from.sendMessage("Du kannst diesen Spieler nicht aus dem Clan werfen");
+                        from.sendMessage("clan-cant-kick-user");
                         return;
                     }
                     ListenableFuture<Boolean> kickFuture = clanSystem.getClanManager().leaveClan(toKick, currentClan);
                     Callback.of(kickFuture, kicked -> {
                         if (kicked) {
-                            toKick.sendMessage("Du wurdest von §c" + from.getName() + " §7aus dem Clan geworfen");
-                            currentClan.broadcast("§c" + from.getName() + " §7hat §c" + toKick.getName() + " §7aus dem Clan geworfen");
+                            toKick.sendMessage("clan-got-kicked", from.getName());
+                            currentClan.broadcast("clan-kick", from.getName(), toKick.getName());
                         }
                     });
                 });

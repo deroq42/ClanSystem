@@ -5,6 +5,7 @@ import de.deroq.clans.model.AbstractClan;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -13,9 +14,11 @@ import java.util.UUID;
  */
 public interface AbstractUser {
 
-    void sendMessage(String message);
+    void sendMessage(String translationKey, Object... objects);
 
     void sendMessage(TextComponent textComponent);
+
+    String translate(String translationKey, Object... objects);
 
     ListenableFuture<AbstractClan> getClan();
 
@@ -28,4 +31,8 @@ public interface AbstractUser {
     String getName();
 
     void setClan(UUID clan);
+
+    Locale getLocale();
+
+    void setLocale(Locale locale);
 }

@@ -5,7 +5,6 @@ import de.deroq.clans.ClanSystem;
 import de.deroq.clans.user.AbstractUser;
 import lombok.Getter;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,16 +84,15 @@ public class Clan implements AbstractClan {
 
     @Override
     public synchronized void chat(AbstractUser user, String message) {
-        broadcast("§c" + user.getName() + "§7: " + message);
+        broadcast("clan-chat-format", user.getName(), message);
     }
 
     @Override
-    public synchronized void broadcast(String message) {
+    public synchronized void broadcast(String translationKey, Object... objects) {
         members.keySet()
                 .stream()
-                .map(uuid -> ProxyServer.getInstance().getPlayer(uuid))
-                .filter(Objects::nonNull)
-                .forEach(player -> player.sendMessage(TextComponent.fromLegacyText(ClanSystem.PREFIX + message)));
+                .map(uuid -> clanSystem.getUserManager().getOnlineUser(uuid))
+                .forEach(user -> user.sendMessage(translationKey, objects));
     }
 
     @Override
@@ -129,10 +127,11 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public Collection<UUID> getOnlinePlayers() {
+    public Collection<AbstractUser> getOnlinePlayers() {
         return members.keySet()
                 .stream()
                 .filter(uuid -> ProxyServer.getInstance().getPlayer(uuid) != null)
+                .map(uuid -> clanSystem.getUserManager().getOnlineUser(uuid))
                 .collect(Collectors.toList());
     }
 

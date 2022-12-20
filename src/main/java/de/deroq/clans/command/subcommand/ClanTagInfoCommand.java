@@ -20,13 +20,13 @@ public class ClanTagInfoCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser user, String[] args) {
         if (args.length != 1) {
-            sendHelp(user);
+            sendHelp(user, 2);
             return;
         }
         ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByTag(args[0]);
         Callback.of(clanFuture, clan -> {
             if (clan == null) {
-                user.sendMessage("Diesen Clan gibt es nicht");
+                user.sendMessage("no-clan");
                 return;
             }
             sendInfo(clanSystem, user, clan, false);

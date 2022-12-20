@@ -7,6 +7,7 @@ import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,19 +24,20 @@ public class ClanRequestsCommand extends ClanSubCommand {
     public void run(AbstractUser user, String[] args) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
-                user.sendMessage("Du bist in keinem Clan");
+                user.sendMessage("no-clan");
                 return;
             }
             if (!currentClan.isLeader(user)) {
-                user.sendMessage("Du bist kein Leader dieses Clans");
+                user.sendMessage("not-leader-of-clan");
                 return;
             }
-            user.sendMessage("Beitrittsanfragen");
+            user.sendMessage("clan-requests");
+            Set<String> names = new HashSet<>();
             ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
             Callback.of(requestsFuture, requests -> {
                 for (UUID uuid : requests) {
                     ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
-                    Callback.of(userFuture, request -> user.sendMessage(request.getName()));
+                    Callback.of(userFuture, request -> user.sendMessage("clan-requests-format", request.getName()));
                 }
             });
         });

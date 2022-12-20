@@ -23,21 +23,21 @@ public class ClanAcceptAllCommand extends ClanSubCommand {
     public void run(AbstractUser from, String[] args) {
         Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
-                from.sendMessage("Du bist in keinem Clan");
+                from.sendMessage("user-no-clan");
                 return;
             }
             if (!currentClan.isLeader(from)) {
-                from.sendMessage("Du bist kein Leader dieses Clans");
+                from.sendMessage("user-not-leader-of-clan");
                 return;
             }
             ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
             Callback.of(requestsFuture, requests -> {
                 if (requests.isEmpty()) {
-                    from.sendMessage("Es sind keine Beitrittsanfragen offen");
+                    from.sendMessage("requests-no-remaining");
                     return;
                 }
                 if (currentClan.getMembers().size() + requests.size() >= ClanSystem.CLAN_PLAYER_LIMIT) {
-                    from.sendMessage("Es ist nicht genug Platz um alle Beitrittsanfragen anzunehmen");
+                    from.sendMessage("requests-clan-limit-reached");
                     return;
                 }
                 requests.stream()
@@ -49,17 +49,17 @@ public class ClanAcceptAllCommand extends ClanSubCommand {
                                         ListenableFuture<Boolean> acceptFuture = clanSystem.getRequestManager().acceptRequest(toAccept, currentClan, requests);
                                         Callback.of(acceptFuture, accepted -> {
                                             if (accepted) {
-                                                currentClan.broadcast("§c" + toAccept.getName() + " §7hat den Clan betreten");
+                                                currentClan.broadcast("clan-join", toAccept.getName());
                                             }
                                         });
                                     } else {
-                                        from.sendMessage("Dieser Spieler ist bereits in einem Clan");
+                                        from.sendMessage("user-already-in-clan");
                                     }
                                 });
                             });
                         });
             });
-            from.sendMessage("Du hast alle Beitrittsanfragen angenommen");
+            from.sendMessage("requests-accepted-all");
         });
     }
 }

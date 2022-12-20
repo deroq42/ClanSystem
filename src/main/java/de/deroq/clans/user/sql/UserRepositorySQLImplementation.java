@@ -11,6 +11,7 @@ import de.deroq.clans.util.Executors;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -25,6 +26,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     private final String insertUser;
     private final String updateUserClan;
     private final String selectUser;
+    private final String updateUserLocale;
     private final String createUUIDCacheTable;
     private final String insertUUIDCache;
     private final String selectUUIDCache;
@@ -33,10 +35,11 @@ public class UserRepositorySQLImplementation implements UserRepository {
         this.clanSystem = clanSystem;
         this.mySQL = clanSystem.getDatabaseConnector().getMySQL();
         // clan_users table
-        this.createUsersTable = "CREATE TABLE IF NOT EXISTS clan_users(player VARCHAR(36), name VARCHAR(16), clan VARCHAR(36), PRIMARY KEY(player))";
-        this.insertUser = "INSERT INTO clan_users(player, name, clan) VALUES (?, ?, ?)";
+        this.createUsersTable = "CREATE TABLE IF NOT EXISTS clan_users(player VARCHAR(36), name VARCHAR(16), clan VARCHAR(36), locale VARCHAR(5), PRIMARY KEY(player))";
+        this.insertUser = "INSERT INTO clan_users(player, name, clan, locale) VALUES (?, ?, ?, ?)";
         this.updateUserClan = "UPDATE clan_users SET clan = ? WHERE player = ?";
         this.selectUser = "SELECT * FROM clan_users WHERE player = ?";
+        this.updateUserLocale = "UPDATE clan_users SET locale = ? WHERE player = ?";
 
         // uuid_cache table
         this.createUUIDCacheTable = "CREATE TABLE IF NOT EXISTS uuid_cache(name VARCHAR(16), uuid VARCHAR(36), PRIMARY KEY(name))";
@@ -54,7 +57,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     public ListenableFuture<Boolean> insertUser(AbstractUser user) {
         return mySQL.update(
                 insertUser,
-                user.getUuid().toString(), user.getName(), null
+                user.getUuid().toString(), user.getName(), null, user.getLocale().toLanguageTag()
         );
     }
 
@@ -73,7 +76,8 @@ public class UserRepositorySQLImplementation implements UserRepository {
                             clanSystem,
                             uuid,
                             resultSet.getString("name"),
-                            clan
+                            clan,
+                            Locale.forLanguageTag(resultSet.getString("locale"))
                     );
                 }
             } catch (SQLException e) {
@@ -88,6 +92,14 @@ public class UserRepositorySQLImplementation implements UserRepository {
         return mySQL.update(
                 updateUserClan,
                 (newClan == null ? null : newClan.toString()), player.toString()
+        );
+    }
+
+    @Override
+    public ListenableFuture<Boolean> updateLocale(AbstractUser user, Locale locale) {
+        return mySQL.update(
+                updateUserLocale,
+                locale.toLanguageTag(), user.getUuid().toString()
         );
     }
 

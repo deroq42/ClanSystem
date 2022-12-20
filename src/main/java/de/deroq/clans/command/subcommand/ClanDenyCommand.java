@@ -25,14 +25,14 @@ public class ClanDenyCommand extends ClanSubCommand {
     @Override
     public void run(AbstractUser user, String[] args) {
         if (args.length != 1) {
-            sendHelp(user);
+            sendHelp(user, 1);
             return;
         }
         String name = args[0].toLowerCase();
         ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanByName(name);
         Callback.of(clanFuture, toDeny -> {
             if (toDeny == null) {
-                user.sendMessage("Diesen Clan gibt es nicht");
+                user.sendMessage("clan-not-found");
                 return;
             }
             ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
@@ -41,13 +41,13 @@ public class ClanDenyCommand extends ClanSubCommand {
                         .filter(clanUserPair -> clanUserPair.getKey().equals(toDeny.getClanId()))
                         .findFirst();
                 if (!optionalInvite.isPresent()) {
-                    user.sendMessage("Du hast keine Einladung von diesem Clan erhalten");
+                    user.sendMessage("invites-clan-didnt-invite");
                     return;
                 }
                 ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyInvite(user, toDeny, invites);
                 Callback.of(denyFuture, denied -> {
                     if (denied) {
-                        user.sendMessage("Du hast die Einladung vom Clan §c" + toDeny.getClanName() + " §7abgelehnt");
+                        user.sendMessage("clan-invite-denied", toDeny.getClanName());
                     }
                 });
             });

@@ -23,17 +23,17 @@ public class ClanDeclineAllCommand extends ClanSubCommand {
     public void run(AbstractUser from, String[] args) {
         Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
-                from.sendMessage("Du bist in keinem Clan");
+                from.sendMessage("no-clan");
                 return;
             }
             if (!currentClan.isLeader(from)) {
-                from.sendMessage("Du bist kein Leader dieses Clans");
+                from.sendMessage("not-leader-of-clan");
                 return;
             }
             ListenableFuture<Set<UUID>> requestsFuture = clanSystem.getRequestManager().getRequests(currentClan);
             Callback.of(requestsFuture, requests -> {
                 if (requests.isEmpty()) {
-                    from.sendMessage("Es sind keine Beitrittsanfragen offen");
+                    from.sendMessage("requests-no-remaining");
                     return;
                 }
                 requests.stream()
@@ -43,13 +43,13 @@ public class ClanDeclineAllCommand extends ClanSubCommand {
                                 ListenableFuture<Boolean> declineFuture = clanSystem.getRequestManager().declineRequest(toDecline, currentClan, requests);
                                 Callback.of(declineFuture, declined -> {
                                     if (declined) {
-                                        toDecline.sendMessage("Deine Beitrittsanfrage an den Clan §c" + currentClan.getClanName() + " §7wurde abgelehnt");
+                                        toDecline.sendMessage("requests-request-declined", toDecline.getName());
                                     }
                                 });
                             });
                         });
             });
-            from.sendMessage("Du hast alle Beitrittsanfragen abgelehnt");
+            from.sendMessage("requests-declined-all");
         });
     }
 }

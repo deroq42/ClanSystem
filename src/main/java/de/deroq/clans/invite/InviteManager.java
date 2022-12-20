@@ -15,7 +15,7 @@ import java.util.UUID;
  */
 public interface InviteManager {
 
-    ListenableFuture<Boolean> sendInvite(AbstractUser invited, AbstractClan clan, AbstractUser inviter, Set<Pair<UUID, UUID>> invites);
+    ListenableFuture<Boolean> sendInvite(AbstractUser invited, AbstractClan clan, AbstractUser from, Set<Pair<UUID, UUID>> invites);
 
     ListenableFuture<Boolean> denyInvite(AbstractUser user, AbstractClan clan, Set<Pair<UUID, UUID>> invites);
 
@@ -25,9 +25,11 @@ public interface InviteManager {
 
     ListenableFuture<Boolean> removeInvitesByUser(AbstractUser user);
 
-    ListenableFuture<Boolean> removeInvitesByClan(UUID clan);
+    ListenableFuture<Boolean> removeInvitesByClan(AbstractClan clan);
 
-    ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(UUID player);
+    ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(AbstractUser user);
+
+    void checkForPendingInvites(AbstractUser user);
 
     LoadingCache<UUID, ListenableFuture<Set<Pair<UUID, UUID>>>> getInviteCache();
 }

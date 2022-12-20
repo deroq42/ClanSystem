@@ -42,8 +42,6 @@ public interface ClanManager {
 
     void updateClan(AbstractClan clan);
 
-    void checkForPendingRequests(AbstractUser user);
-
     LoadingCache<UUID, ListenableFuture<AbstractClan>> getClanByIdCache();
 
     LoadingCache<String, ListenableFuture<UUID>> getClanByNameCache();

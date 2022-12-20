@@ -10,6 +10,7 @@ import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanInviteRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
+import de.deroq.clans.util.MessageBuilder;
 import de.deroq.clans.util.Pair;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,13 @@ public class InviteManagerImplementation implements InviteManager {
         Pair<UUID, UUID> invite = Pair.of(clan.getClanId(), inviter.getUuid());
         invites.add(invite);
         inviteCache.put(invited.getUuid(), Futures.immediateFuture(invites));
-        invited.sendMessage("Du wurdest vom Clan §c" + clan.getClanName() + " §7eingeladen");
+        invited.sendMessage("clan-got-invited", clan.getClanName());
+        invited.sendMessage(
+                new MessageBuilder(invited)
+                .addClickEvent("clan-invite-accept-button", "/clan join " + clan.getClanName())
+                .addClickEvent("clan-invite-deny-button", "/clan deny " + clan.getClanName())
+                .toComponent()
+        );
         return repository.insertInvite(
                 invited.getUuid(),
                 clan.getClanId(),
@@ -90,12 +97,23 @@ public class InviteManagerImplementation implements InviteManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> removeInvitesByClan(UUID clan) {
-        return repository.deleteInvitesByClan(clan);
+    public ListenableFuture<Boolean> removeInvitesByClan(AbstractClan clan) {
+        return repository.deleteInvitesByClan(clan.getClanId());
     }
 
     @Override
-    public ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(UUID player) {
-        return inviteCache.getUnchecked(player);
+    public ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(AbstractUser user) {
+        return inviteCache.getUnchecked(user.getUuid());
+    }
+
+    @Override
+    public void checkForPendingInvites(AbstractUser user) {
+        ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = getInvites(user);
+        Callback.of(invitesFuture, invites -> {
+            if (!invites.isEmpty()) {
+                user.sendMessage("invites-pending-invites-" + (invites.size() == 1 ? "one" : "multiple"));
+                user.sendMessage(new MessageBuilder(user, "invites-pending-invites-button").addClickEvent("/clan invites").toComponent());
+            }
+        });
     }
 }

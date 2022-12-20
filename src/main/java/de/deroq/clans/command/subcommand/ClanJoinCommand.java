@@ -40,7 +40,7 @@ public class ClanJoinCommand extends ClanSubCommand {
                     user.sendMessage("clan-not-found");
                     return;
                 }
-                ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user.getUuid());
+                ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(user);
                 Callback.of(invitesFuture, invites -> {
                     Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
                             .filter(clanUserPair -> clanUserPair.getKey().equals(toJoin.getClanId()))

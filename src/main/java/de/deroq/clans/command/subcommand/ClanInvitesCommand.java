@@ -3,6 +3,7 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
+import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Pair;
@@ -13,10 +14,10 @@ import java.util.UUID;
 
 /**
  * @author Miles
- * @since 12.12.2022
+ * @since 20.12.2022
  */
 @RequiredArgsConstructor
-public class ClanDenyAllCommand extends ClanSubCommand {
+public class ClanInvitesCommand extends ClanSubCommand {
 
     private final ClanSystem clanSystem;
 
@@ -28,12 +29,11 @@ public class ClanDenyAllCommand extends ClanSubCommand {
                 user.sendMessage("invites-no-remaining");
                 return;
             }
-            ListenableFuture<Boolean> denyFuture = clanSystem.getInviteManager().denyAllInvites(user, invites);
-            Callback.of(denyFuture, denied -> {
-                if (denied) {
-                    user.sendMessage("invites-denied-all");
-                }
-            });
+            user.sendMessage("clan-invites-header");
+            for (Pair<UUID, UUID> pair : invites) {
+                ListenableFuture<AbstractClan> clanFuture = clanSystem.getClanManager().getClanById(pair.getKey());
+                Callback.of(clanFuture, invite -> user.sendMessage("clan-invites-clan-format", invite.getClanName()));
+            }
         });
     }
 }

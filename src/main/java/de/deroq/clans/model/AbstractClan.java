@@ -73,11 +73,11 @@ public interface AbstractClan {
         private final int id;
 
         @Getter
-        private final String text;
+        private final String translationKey;
 
-        Group(int id, String text) {
+        Group(int id, String translationKey) {
             this.id = id;
-            this.text = text;
+            this.translationKey = translationKey;
         }
 
         public static Clan.Group getNextGroup(Clan.Group oldGroup) {

@@ -60,7 +60,7 @@ public class ClanPromoteCommand extends ClanSubCommand {
                         if (group == null) {
                             user.sendMessage("user-already-leader");
                         } else {
-                            currentClan.broadcast("clan-group-change", toPromote.getName(), group.getText());
+                            currentClan.broadcast("clan-group-change", toPromote.getName(), user.translate(group.getTranslationKey()));
                         }
                     });
                 });

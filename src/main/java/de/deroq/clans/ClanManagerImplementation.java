@@ -11,13 +11,11 @@ import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Executors;
-import de.deroq.clans.util.MessageBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -95,7 +93,7 @@ public class ClanManagerImplementation implements ClanManager {
         clanByNameCache.invalidate(clan.getClanName());
         clanByTagCache.invalidate(clan.getClanTag());
         clan.getMembersAsFuture().forEach(userFuture -> Callback.of(userFuture, user -> clanSystem.getUserManager().setClan(user, null)));
-        clanSystem.getInviteManager().removeInvitesByClan(clan.getClanId());
+        clanSystem.getInviteManager().removeInvitesByClan(clan);
         return repository.deleteClan(clan);
     }
 
@@ -187,20 +185,5 @@ public class ClanManagerImplementation implements ClanManager {
     @Override
     public void updateClan(AbstractClan clan) {
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
-    }
-
-    @Override
-    public void checkForPendingRequests(AbstractUser user) {
-        Callback.of(user.getClan(), currentClan -> {
-            if (currentClan != null && currentClan.isLeader(user)) {
-                ListenableFuture<Set<UUID>> requestFuture = clanSystem.getRequestManager().getRequests(currentClan);
-                Callback.of(requestFuture, requests -> {
-                    if (!requests.isEmpty()) {
-                        user.sendMessage("Es sind noch §c" + requests.size() + " §7Beitrittsanfragen offen");
-                        user.sendMessage(new MessageBuilder("§a[ANSEHEN]").addClickEvent("/clan requests").toComponent());
-                    }
-                });
-            }
-        });
     }
 }

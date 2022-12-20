@@ -27,6 +27,8 @@ public interface LanguageManager {
 
     boolean isLanguageSupported(Locale locale);
 
+    Set<String> getSupportedLanguages();
+
     Set<Locale> getLoadedLocales();
 
     Map<Locale, Map<String, String>> getTranslations();

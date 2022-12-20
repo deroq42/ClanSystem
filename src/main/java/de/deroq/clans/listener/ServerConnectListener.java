@@ -21,6 +21,9 @@ public class ServerConnectListener implements Listener {
     @EventHandler
     public void onServerConnect(ServerConnectedEvent event) {
         ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(event.getPlayer().getUniqueId());
-        Callback.of(userFuture, user -> clanSystem.getClanManager().checkForPendingRequests(user));
+        Callback.of(userFuture, user -> {
+            clanSystem.getRequestManager().checkForPendingRequests(user);
+            clanSystem.getInviteManager().checkForPendingInvites(user);
+        });
     }
 }

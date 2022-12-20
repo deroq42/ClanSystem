@@ -60,7 +60,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
                         if (group == null) {
                             user.sendMessage("user-already-member");
                         } else {
-                            currentClan.broadcast("clan-group-change", toDemote.getName(), group.getText());
+                            currentClan.broadcast("clan-group-change", toDemote.getName(), user.translate(group.getTranslationKey()));
                         }
                     });
                 });

@@ -11,6 +11,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author Miles
@@ -118,6 +119,13 @@ public class LanguageManagerImplementation implements LanguageManager {
     @Override
     public boolean isLanguageSupported(Locale locale) {
         return loadedLocales.contains(locale);
+    }
+
+    @Override
+    public Set<String> getSupportedLanguages() {
+        return loadedLocales.stream()
+                .map(Locale::toLanguageTag)
+                .collect(Collectors.toSet());
     }
 
     @Override

@@ -57,7 +57,7 @@ public class ClanInviteCommand extends ClanSubCommand {
                         from.sendMessage("user-already-in-clan");
                         return;
                     }
-                    ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(uuid);
+                    ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = clanSystem.getInviteManager().getInvites(toInvite);
                     Callback.of(invitesFuture, invites -> {
                         Optional<Pair<UUID, UUID>> optionalInvite = invites.stream()
                                 .filter(clanUserPair -> clanUserPair.getKey().equals(currentClan.getClanId()))

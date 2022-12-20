@@ -47,7 +47,7 @@ public class ClanRequestCommand extends ClanSubCommand {
                     ListenableFuture<Boolean> requestFuture = clanSystem.getRequestManager().sendRequest(toRequest, user, requests);
                     Callback.of(requestFuture, requested -> {
                         if (requested) {
-                            user.sendMessage("clan-request-sent", toRequest.getClanName());
+                            user.sendMessage("requests-request-sent", toRequest.getClanName());
                         }
                     });
                 });

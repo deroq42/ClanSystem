@@ -24,5 +24,7 @@ public interface RequestManager {
 
     ListenableFuture<Set<UUID>> getRequests(AbstractClan clan);
 
+    void checkForPendingRequests(AbstractUser user);
+
     LoadingCache<UUID, ListenableFuture<Set<UUID>>> getRequestCache();
 }

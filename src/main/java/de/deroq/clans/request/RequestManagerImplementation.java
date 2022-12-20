@@ -10,6 +10,7 @@ import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanRequestRepository;
 import de.deroq.clans.user.AbstractUser;
 import de.deroq.clans.util.Callback;
+import de.deroq.clans.util.MessageBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -63,5 +64,20 @@ public class RequestManagerImplementation implements RequestManager {
 
     public ListenableFuture<Set<UUID>> getRequests(AbstractClan clan) {
         return requestCache.getUnchecked(clan.getClanId());
+    }
+
+    @Override
+    public void checkForPendingRequests(AbstractUser user) {
+        Callback.of(user.getClan(), currentClan -> {
+            if (currentClan != null && currentClan.isLeader(user)) {
+                ListenableFuture<Set<UUID>> requestFuture = getRequests(currentClan);
+                Callback.of(requestFuture, requests -> {
+                    if (!requests.isEmpty()) {
+                        user.sendMessage("requests-pending-requests-" + (requests.size() == 1 ? "one" : "multiple"));
+                        user.sendMessage(new MessageBuilder(user, "requests-pending-requests-button").addClickEvent("/clan requests").toComponent());
+                    }
+                });
+            }
+        });
     }
 }

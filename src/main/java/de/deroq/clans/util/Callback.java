@@ -12,17 +12,17 @@ import java.util.function.Consumer;
  */
 public abstract class Callback {
 
-        public static <V> void of(ListenableFuture<V> future, Consumer<V> consumer) {
-            Futures.addCallback(future, new FutureCallback<V>() {
-                @Override
-                public void onSuccess(V v) {
-                    consumer.accept(v);
-                }
+    public static <V> void of(ListenableFuture<V> future, Consumer<V> consumer) {
+        Futures.addCallback(future, new FutureCallback<V>() {
+            @Override
+            public void onSuccess(V v) {
+                consumer.accept(v);
+            }
 
-                @Override
-                public void onFailure(Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-            }, Runnable::run);
-        }
+            @Override
+            public void onFailure(Throwable throwable) {
+                throwable.printStackTrace();
+            }
+        }, Runnable::run);
+    }
 }

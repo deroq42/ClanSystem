@@ -30,15 +30,18 @@ public class ClanSetLanguageCommand extends ClanSubCommand {
             user.sendMessage("language-not-supported", clanSystem.getLanguageManager().getSupportedLanguages());
             return;
         }
-        if (!clanSystem.getLanguageManager().isLanguageSupported(locale)) {
-            user.sendMessage("language-not-supported", clanSystem.getLanguageManager().getSupportedLanguages());
-            return;
-        }
-        ListenableFuture<Boolean> localeFuture = clanSystem.getUserManager().updateLocale(user, locale);
-        Callback.of(localeFuture, changed -> {
-            if (changed) {
-                user.sendMessage("language-changed", locale.toLanguageTag());
+        ListenableFuture<Boolean> languageFuture = clanSystem.getLanguageManager().isLanguageSupported(locale);
+        Callback.of(languageFuture, isSupported -> {
+            if (!isSupported) {
+                user.sendMessage("language-not-supported", clanSystem.getLanguageManager().getSupportedLanguages());
+                return;
             }
+            ListenableFuture<Boolean> updateFuture = clanSystem.getUserManager().updateLocale(user, locale);
+            Callback.of(updateFuture, updated -> {
+                if (updated) {
+                    user.sendMessage("language-changed", locale.toLanguageTag());
+                }
+            });
         });
     }
 }

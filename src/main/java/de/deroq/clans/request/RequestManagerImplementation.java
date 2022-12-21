@@ -67,7 +67,7 @@ public class RequestManagerImplementation implements RequestManager {
     }
 
     @Override
-    public void checkForPendingRequests(AbstractUser user) {
+    public ListenableFuture<Boolean> checkForPendingRequests(AbstractUser user) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan != null && currentClan.isLeader(user)) {
                 ListenableFuture<Set<UUID>> requestFuture = getRequests(currentClan);
@@ -79,5 +79,6 @@ public class RequestManagerImplementation implements RequestManager {
                 });
             }
         });
+        return Futures.immediateFuture(true);
     }
 }

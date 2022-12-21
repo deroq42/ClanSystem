@@ -64,7 +64,7 @@ public class InviteManagerImplementation implements InviteManager {
             ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
             Callback.of(userFuture, inviterUser -> {
                 if (inviterUser != null) {
-                    inviterUser.sendMessage("§c" + user.getName() + " §7hat deine Einladung abgelehnt");
+                    inviterUser.sendMessage("invites-invite-got-denied", user.getName());
                 }
             });
         });
@@ -107,7 +107,7 @@ public class InviteManagerImplementation implements InviteManager {
     }
 
     @Override
-    public void checkForPendingInvites(AbstractUser user) {
+    public ListenableFuture<Boolean> checkForPendingInvites(AbstractUser user) {
         ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = getInvites(user);
         Callback.of(invitesFuture, invites -> {
             if (!invites.isEmpty()) {
@@ -115,5 +115,6 @@ public class InviteManagerImplementation implements InviteManager {
                 user.sendMessage(new MessageBuilder(user, "invites-pending-invites-button").addClickEvent("/clan invites").toComponent());
             }
         });
+        return Futures.immediateFuture(true);
     }
 }

@@ -1,5 +1,6 @@
 package de.deroq.clans.language;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.language.exception.LocaleLoadException;
 
@@ -13,19 +14,19 @@ import java.util.Set;
  */
 public interface LanguageManager {
 
-    void loadLocales(boolean log) throws LocaleLoadException;
+    ListenableFuture<Boolean> loadLocales(boolean log) throws LocaleLoadException;
 
-    void translateLocale(Locale locale, boolean log);
+    boolean translateLocale(Locale locale, boolean log);
 
     String translate(Locale locale, String translationKey, Object... objects);
 
-    void startRefreshing(ClanSystem clanSystem);
+    ListenableFuture<Boolean> startRefreshing(ClanSystem clanSystem);
 
-    void refresh();
+    ListenableFuture<Boolean> refresh();
 
     void clearUp();
 
-    boolean isLanguageSupported(Locale locale);
+    ListenableFuture<Boolean> isLanguageSupported(Locale locale);
 
     Set<String> getSupportedLanguages();
 

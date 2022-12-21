@@ -183,7 +183,8 @@ public class ClanManagerImplementation implements ClanManager {
     }
 
     @Override
-    public void updateClan(AbstractClan clan) {
+    public ListenableFuture<Boolean> updateClan(AbstractClan clan) {
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
+        return Futures.immediateFuture(true);
     }
 }

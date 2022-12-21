@@ -13,12 +13,6 @@ import java.util.UUID;
  */
 public interface UserManager {
 
-    Map<UUID, AbstractUser> getOnlineUserCache();
-
-    LoadingCache<UUID, ListenableFuture<AbstractUser>> getUserCache();
-
-    LoadingCache<String, ListenableFuture<UUID>> getUuidCache();
-
     ListenableFuture<Boolean> createUser(UUID uuid, String name);
 
     ListenableFuture<Boolean> setClan(AbstractUser user, UUID newClan);
@@ -29,11 +23,17 @@ public interface UserManager {
 
     ListenableFuture<Boolean> updateLocale(AbstractUser user, Locale locale);
 
-    void cacheOnlineUser(AbstractUser user);
+    ListenableFuture<Boolean> cacheOnlineUser(AbstractUser user);
 
-    void invalidateOnlineUser(UUID player);
+    ListenableFuture<Boolean> invalidateOnlineUser(UUID player);
 
     ListenableFuture<Boolean> cacheUuid(String name, UUID uuid);
 
     ListenableFuture<UUID> getUUID(String name);
+
+    Map<UUID, AbstractUser> getOnlineUserCache();
+
+    LoadingCache<UUID, ListenableFuture<AbstractUser>> getUserCache();
+
+    LoadingCache<String, ListenableFuture<UUID>> getUuidCache();
 }

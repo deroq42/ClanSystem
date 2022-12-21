@@ -84,13 +84,15 @@ public class UserManagerImplementation implements UserManager {
     }
 
     @Override
-    public void cacheOnlineUser(AbstractUser user) {
+    public ListenableFuture<Boolean> cacheOnlineUser(AbstractUser user) {
         onlineUserCache.put(user.getUuid(), user);
+        return Futures.immediateFuture(true);
     }
 
     @Override
-    public void invalidateOnlineUser(UUID player) {
+    public ListenableFuture<Boolean> invalidateOnlineUser(UUID player) {
         onlineUserCache.remove(player);
+        return Futures.immediateFuture(true);
     }
 
     @Override

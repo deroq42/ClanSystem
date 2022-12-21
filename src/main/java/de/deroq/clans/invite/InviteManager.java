@@ -29,7 +29,7 @@ public interface InviteManager {
 
     ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(AbstractUser user);
 
-    void checkForPendingInvites(AbstractUser user);
+    ListenableFuture<Boolean> checkForPendingInvites(AbstractUser user);
 
     LoadingCache<UUID, ListenableFuture<Set<Pair<UUID, UUID>>>> getInviteCache();
 }

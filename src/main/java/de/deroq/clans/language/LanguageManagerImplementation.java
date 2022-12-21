@@ -1,5 +1,7 @@
 package de.deroq.clans.language;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.language.exception.LocaleLoadException;
 import lombok.Getter;
@@ -36,14 +38,15 @@ public class LanguageManagerImplementation implements LanguageManager {
     }
 
     @Override
-    public synchronized void loadLocales(boolean log) throws LocaleLoadException {
+    public synchronized ListenableFuture<Boolean> loadLocales(boolean log) throws LocaleLoadException {
         if (!localesFolder.exists()) {
             localesFolder.mkdirs();
         }
         File[] files = localesFolder.listFiles();
         if (files == null) {
-            return;
+            return Futures.immediateFuture(false);
         }
+        boolean translated = false;
         for (File file : files) {
             if (file.getName().endsWith(".properties")) {
                 String languageTag = file.getName().substring(0, file.getName().indexOf("."));
@@ -55,13 +58,14 @@ public class LanguageManagerImplementation implements LanguageManager {
                 if (log) {
                     logger.info("Locale " + languageTag + " has been loaded.");
                 }
-                translateLocale(locale, log);
+                translated = translateLocale(locale, log);
             }
         }
+        return Futures.immediateFuture(translated);
     }
 
     @Override
-    public void translateLocale(Locale locale, boolean log) {
+    public boolean translateLocale(Locale locale, boolean log) {
         try (InputStream inputStream = Files.newInputStream(new File(localesFolder.getPath(), locale.toLanguageTag() + ".properties").toPath())) {
             Properties properties = new Properties();
             properties.load(inputStream);
@@ -77,6 +81,7 @@ public class LanguageManagerImplementation implements LanguageManager {
             if (log) {
                 logger.info("Translations of Locale " + locale.toLanguageTag() + " have been loaded.");
             }
+            return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -95,19 +100,22 @@ public class LanguageManagerImplementation implements LanguageManager {
     }
 
     @Override
-    public void startRefreshing(ClanSystem clanSystem) {
+    public ListenableFuture<Boolean> startRefreshing(ClanSystem clanSystem) {
         ProxyServer.getInstance().getScheduler().schedule(clanSystem, () -> ProxyServer.getInstance().getScheduler().runAsync(clanSystem, this::refresh), 5, TimeUnit.MINUTES);
+        return Futures.immediateFuture(true);
     }
 
     @Override
-    public synchronized void refresh() {
+    public synchronized ListenableFuture<Boolean> refresh() {
         clearUp();
+        ListenableFuture<Boolean> future;
         try {
-            loadLocales(false);
+            future = loadLocales(false);
         } catch (LocaleLoadException e) {
             throw new RuntimeException(e);
         }
         logger.info("Locales have been refreshed.");
+        return future;
     }
 
     @Override
@@ -117,8 +125,8 @@ public class LanguageManagerImplementation implements LanguageManager {
     }
 
     @Override
-    public boolean isLanguageSupported(Locale locale) {
-        return loadedLocales.contains(locale);
+    public ListenableFuture<Boolean> isLanguageSupported(Locale locale) {
+        return Futures.immediateFuture(loadedLocales.contains(locale));
     }
 
     @Override

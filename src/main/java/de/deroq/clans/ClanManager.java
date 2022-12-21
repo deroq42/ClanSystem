@@ -40,7 +40,7 @@ public interface ClanManager {
 
     ListenableFuture<AbstractClan> getClanByPlayer(UUID player);
 
-    void updateClan(AbstractClan clan);
+    ListenableFuture<Boolean> updateClan(AbstractClan clan);
 
     LoadingCache<UUID, ListenableFuture<AbstractClan>> getClanByIdCache();
 

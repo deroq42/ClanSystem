@@ -2,7 +2,7 @@ package de.deroq.clans.listener;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
@@ -20,7 +20,7 @@ public class ServerConnectListener implements Listener {
 
     @EventHandler
     public void onServerConnect(ServerConnectedEvent event) {
-        ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(event.getPlayer().getUniqueId());
+        ListenableFuture<AbstractClanUser> userFuture = clanSystem.getUserManager().getUser(event.getPlayer().getUniqueId());
         Callback.of(userFuture, user -> {
             clanSystem.getRequestManager().checkForPendingRequests(user);
             clanSystem.getInviteManager().checkForPendingInvites(user);

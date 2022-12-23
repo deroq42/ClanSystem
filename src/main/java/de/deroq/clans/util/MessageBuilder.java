@@ -1,7 +1,6 @@
 package de.deroq.clans.util;
 
-import de.deroq.clans.ClanSystem;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -11,15 +10,15 @@ import net.md_5.bungee.api.chat.TextComponent;
  */
 public class MessageBuilder {
 
-    private final AbstractUser user;
+    private final AbstractClanUser user;
     private final TextComponent textComponent;
 
-    public MessageBuilder(AbstractUser user) {
+    public MessageBuilder(AbstractClanUser user) {
         this.user = user;
         this.textComponent = new TextComponent();
     }
 
-    public MessageBuilder(AbstractUser user, String translationKey) {
+    public MessageBuilder(AbstractClanUser user, String translationKey) {
         this.user = user;
         this.textComponent = new TextComponent(user.translate(translationKey));
     }

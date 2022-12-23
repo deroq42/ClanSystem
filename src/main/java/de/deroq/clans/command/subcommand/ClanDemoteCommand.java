@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +20,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(AbstractUser user, String[] args) {
+    public void run(AbstractClanUser user, String[] args) {
         if (args.length != 1) {
             sendHelp(user, 2);
             return;
@@ -45,7 +45,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
                     user.sendMessage("user-not-found");
                     return;
                 }
-                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+                ListenableFuture<AbstractClanUser> userFuture = clanSystem.getUserManager().getUser(uuid);
                 Callback.of(userFuture, toDemote -> {
                     if (toDemote == null) {
                         user.sendMessage("user-not-found");
@@ -60,7 +60,7 @@ public class ClanDemoteCommand extends ClanSubCommand {
                         if (group == null) {
                             user.sendMessage("user-already-member");
                         } else {
-                            currentClan.broadcast("clan-group-change", toDemote.getName(), user.translate(group.getTranslationKey()));
+                            currentClan.broadcast(member -> member.sendMessage("clan-group-change", toDemote.getName(), user.translate(group.getTranslationKey())));
                         }
                     });
                 });

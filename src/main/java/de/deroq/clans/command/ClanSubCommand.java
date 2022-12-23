@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import net.md_5.bungee.api.ProxyServer;
 
@@ -17,13 +17,13 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class ClanSubCommand {
 
-    public abstract void run(AbstractUser user, String[] args);
+    public abstract void run(AbstractClanUser user, String[] args);
 
-    public void sendHelp(AbstractUser user, int page) {
+    public void sendHelp(AbstractClanUser user, int page) {
         user.sendMessage("clan-help-page" + page);
     }
 
-    public void sendInfo(ClanSystem clanSystem, AbstractUser user, AbstractClan clan, boolean showOnlineStatus) {
+    public void sendInfo(ClanSystem clanSystem, AbstractClanUser user, AbstractClan clan, boolean showOnlineStatus) {
         user.sendMessage("clan-info-header",
                 clan.getClanName(),
                 clan.getClanName(),
@@ -31,7 +31,7 @@ public abstract class ClanSubCommand {
                 clan.getMembers().size(), ClanSystem.CLAN_PLAYER_LIMIT
         );
         Map<Clan.Group, Map<String, String>> map = new HashMap<>();
-        for (ListenableFuture<AbstractUser> future : clan.getMembersAsFuture()) {
+        for (ListenableFuture<AbstractClanUser> future : clan.getMembersAsFuture()) {
             Callback.of(future, member -> {
                 Clan.Group group = clan.getGroup(member);
                 Map<String, String> names = map.computeIfAbsent(group, o -> new HashMap<>());

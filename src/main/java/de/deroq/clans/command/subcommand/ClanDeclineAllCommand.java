@@ -3,7 +3,7 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +20,7 @@ public class ClanDeclineAllCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(AbstractUser from, String[] args) {
+    public void run(AbstractClanUser from, String[] args) {
         Callback.of(from.getClan(), currentClan -> {
             if (currentClan == null) {
                 from.sendMessage("no-clan");

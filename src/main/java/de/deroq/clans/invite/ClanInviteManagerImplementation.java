@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanInviteRepository;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.MessageBuilder;
 import de.deroq.clans.util.Pair;
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @since 10.12.2022
  */
 @RequiredArgsConstructor
-public class InviteManagerImplementation implements InviteManager {
+public class ClanInviteManagerImplementation implements ClanInviteManager {
 
     private final ClanSystem clanSystem;
     private final ClanInviteRepository repository;
@@ -40,7 +40,7 @@ public class InviteManagerImplementation implements InviteManager {
             });
 
     @Override
-    public ListenableFuture<Boolean> sendInvite(AbstractUser invited, AbstractClan clan, AbstractUser inviter, Set<Pair<UUID, UUID>> invites) {
+    public ListenableFuture<Boolean> sendInvite(AbstractClanUser invited, AbstractClan clan, AbstractClanUser inviter, Set<Pair<UUID, UUID>> invites) {
         Pair<UUID, UUID> invite = Pair.of(clan.getClanId(), inviter.getUuid());
         invites.add(invite);
         inviteCache.put(invited.getUuid(), Futures.immediateFuture(invites));
@@ -59,9 +59,9 @@ public class InviteManagerImplementation implements InviteManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> denyInvite(AbstractUser user, AbstractClan clan, Set<Pair<UUID, UUID>> invites) {
+    public ListenableFuture<Boolean> denyInvite(AbstractClanUser user, AbstractClan clan, Set<Pair<UUID, UUID>> invites) {
         invites.forEach(clanUuidPair -> {
-            ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
+            ListenableFuture<AbstractClanUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
             Callback.of(userFuture, inviterUser -> {
                 if (inviterUser != null) {
                     inviterUser.sendMessage("invites-invite-got-denied", user.getName());
@@ -72,9 +72,9 @@ public class InviteManagerImplementation implements InviteManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> denyAllInvites(AbstractUser user, Set<Pair<UUID, UUID>> invites) {
+    public ListenableFuture<Boolean> denyAllInvites(AbstractClanUser user, Set<Pair<UUID, UUID>> invites) {
         invites.forEach(clanUuidPair -> {
-            ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
+            ListenableFuture<AbstractClanUser> userFuture = clanSystem.getUserManager().getUser(clanUuidPair.getValue());
             Callback.of(userFuture, inviterUser -> {
                 if (inviterUser != null) {
                     inviterUser.sendMessage("invites-invite-got-denied", user.getName());
@@ -85,13 +85,13 @@ public class InviteManagerImplementation implements InviteManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> removeInvite(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> removeInvite(AbstractClanUser user, AbstractClan clan) {
         inviteCache.invalidate(user.getUuid());
         return repository.deleteInvite(user.getUuid(), clan.getClanId());
     }
 
     @Override
-    public ListenableFuture<Boolean> removeInvitesByUser(AbstractUser user) {
+    public ListenableFuture<Boolean> removeInvitesByUser(AbstractClanUser user) {
         inviteCache.invalidate(user.getUuid());
         return repository.deleteInvitesByPlayer(user.getUuid());
     }
@@ -102,12 +102,12 @@ public class InviteManagerImplementation implements InviteManager {
     }
 
     @Override
-    public ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(AbstractUser user) {
+    public ListenableFuture<Set<Pair<UUID, UUID>>> getInvites(AbstractClanUser user) {
         return inviteCache.getUnchecked(user.getUuid());
     }
 
     @Override
-    public ListenableFuture<Boolean> checkForPendingInvites(AbstractUser user) {
+    public ListenableFuture<Boolean> checkForPendingInvites(AbstractClanUser user) {
         ListenableFuture<Set<Pair<UUID, UUID>>> invitesFuture = getInvites(user);
         Callback.of(invitesFuture, invites -> {
             if (!invites.isEmpty()) {

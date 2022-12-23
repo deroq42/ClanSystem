@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.model.AbstractClan;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Pair;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class ClanDenyCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(AbstractUser user, String[] args) {
+    public void run(AbstractClanUser user, String[] args) {
         if (args.length != 1) {
             sendHelp(user, 1);
             return;

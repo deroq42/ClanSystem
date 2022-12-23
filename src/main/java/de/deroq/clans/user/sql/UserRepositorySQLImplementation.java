@@ -4,8 +4,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.database.DatabaseConnector;
-import de.deroq.clans.repository.UserRepository;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.repository.ClanUserRepository;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.user.ClanUser;
 import de.deroq.clans.util.Executors;
 
@@ -18,7 +18,7 @@ import java.util.UUID;
  * @author Miles
  * @since 10.12.2022
  */
-public class UserRepositorySQLImplementation implements UserRepository {
+public class UserRepositorySQLImplementation implements ClanUserRepository {
 
     private final ClanSystem clanSystem;
     private final DatabaseConnector.MySQL mySQL;
@@ -47,14 +47,14 @@ public class UserRepositorySQLImplementation implements UserRepository {
         this.selectUUIDCache = "SELECT uuid FROM uuid_cache WHERE name = ?";
     }
 
-    public UserRepository createTables() {
+    public ClanUserRepository createTables() {
         mySQL.update(createUsersTable);
         mySQL.update(createUUIDCacheTable);
         return this;
     }
 
     @Override
-    public ListenableFuture<Boolean> insertUser(AbstractUser user) {
+    public ListenableFuture<Boolean> insertUser(AbstractClanUser user) {
         return mySQL.update(
                 insertUser,
                 user.getUuid().toString(), user.getName(), null, user.getLocale().toLanguageTag()
@@ -62,7 +62,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     }
 
     @Override
-    public synchronized ListenableFuture<AbstractUser> getUser(UUID uuid) {
+    public synchronized ListenableFuture<AbstractClanUser> getUser(UUID uuid) {
         ListenableFuture<ResultSet> future = mySQL.query(
                 selectUser,
                 uuid.toString()
@@ -96,7 +96,7 @@ public class UserRepositorySQLImplementation implements UserRepository {
     }
 
     @Override
-    public ListenableFuture<Boolean> updateLocale(AbstractUser user, Locale locale) {
+    public ListenableFuture<Boolean> updateLocale(AbstractClanUser user, Locale locale) {
         return mySQL.update(
                 updateUserLocale,
                 locale.toLanguageTag(), user.getUuid().toString()

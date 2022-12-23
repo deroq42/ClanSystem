@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.model.Clan;
 import de.deroq.clans.repository.ClanDataRepository;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import de.deroq.clans.util.Executors;
 import lombok.Getter;
@@ -70,7 +70,7 @@ public class ClanManagerImplementation implements ClanManager {
             });
 
     @Override
-    public ListenableFuture<AbstractClan> createClan(AbstractUser user, String clanName, String clanTag) {
+    public ListenableFuture<AbstractClan> createClan(AbstractClanUser user, String clanName, String clanTag) {
         UUID id = UUID.randomUUID();
         Clan clan = new Clan(
                 clanSystem,
@@ -98,7 +98,7 @@ public class ClanManagerImplementation implements ClanManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> leaveClan(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> leaveClan(AbstractClanUser user, AbstractClan clan) {
         clan.leave(user);
         clanByPlayerCache.invalidate(user.getUuid());
         clanByIdCache.put(user.getUuid(), Futures.immediateFuture(clan));
@@ -123,7 +123,7 @@ public class ClanManagerImplementation implements ClanManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> joinClan(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> joinClan(AbstractClanUser user, AbstractClan clan) {
         user.setClan(clan.getClanId());
         clan.join(user.getUuid());
         clanByIdCache.put(clan.getClanId(), Futures.immediateFuture(clan));
@@ -134,7 +134,7 @@ public class ClanManagerImplementation implements ClanManager {
     }
 
     @Override
-    public ListenableFuture<Clan.Group> promoteUser(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Clan.Group> promoteUser(AbstractClanUser user, AbstractClan clan) {
         Clan.Group group = clan.promote(user);
         updateClan(clan);
         repository.updateMembers(clan);
@@ -142,7 +142,7 @@ public class ClanManagerImplementation implements ClanManager {
     }
 
     @Override
-    public ListenableFuture<Clan.Group> demoteUser(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Clan.Group> demoteUser(AbstractClanUser user, AbstractClan clan) {
         Clan.Group group = clan.demote(user);
         updateClan(clan);
         repository.updateMembers(clan);

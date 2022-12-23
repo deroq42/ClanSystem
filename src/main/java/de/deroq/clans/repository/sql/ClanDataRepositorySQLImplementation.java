@@ -7,7 +7,7 @@ import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.model.Clan;
 import de.deroq.clans.repository.ClanDataRepository;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Executors;
 import lombok.RequiredArgsConstructor;
 
@@ -146,7 +146,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
     }
 
     @Override
-    public ListenableFuture<Boolean> joinClan(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> joinClan(AbstractClanUser user, AbstractClan clan) {
         mySQL.update(
                 insertClanByPlayer,
                 user.getUuid().toString(), clan.getClanId().toString()
@@ -155,7 +155,7 @@ public class ClanDataRepositorySQLImplementation implements ClanDataRepository {
     }
 
     @Override
-    public ListenableFuture<Boolean> leaveClan(AbstractUser user, AbstractClan clan) {
+    public ListenableFuture<Boolean> leaveClan(AbstractClanUser user, AbstractClan clan) {
         mySQL.update(
                 deleteClanByPlayerUUID,
                 user.getUuid().toString()

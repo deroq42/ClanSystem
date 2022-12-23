@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
 import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +18,7 @@ public class ClanLeaveCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(AbstractUser user, String[] args) {
+    public void run(AbstractClanUser user, String[] args) {
         Callback.of(user.getClan(), currentClan -> {
             if (currentClan == null) {
                 user.sendMessage("no-clan");

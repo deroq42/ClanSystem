@@ -1,10 +1,11 @@
 package de.deroq.clans.model;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Miles
@@ -16,31 +17,33 @@ public interface AbstractClan {
 
     void join(UUID player);
 
-    void leave(AbstractUser user);
+    void leave(AbstractClanUser user);
 
-    Clan.Group promote(AbstractUser user);
+    AbstractClan.Group promote(AbstractClanUser user);
 
-    Clan.Group demote(AbstractUser user);
+    AbstractClan.Group demote(AbstractClanUser user);
 
-    void chat(AbstractUser user, String message);
+    void chat(AbstractClanUser user, String message);
 
     void broadcast(String translationKey, Object... objects);
 
-    Clan.Group getGroup(AbstractUser user);
+    void broadcast(Consumer<AbstractClanUser> consumer);
 
-    boolean isLeader(AbstractUser user);
+    AbstractClan.Group getGroup(AbstractClanUser user);
 
-    boolean isDefault(AbstractUser user);
+    boolean isLeader(AbstractClanUser user);
 
-    boolean containsUser(AbstractUser user);
+    boolean isDefault(AbstractClanUser user);
 
-    boolean canKick(AbstractUser toKick, AbstractUser from);
+    boolean containsUser(AbstractClanUser user);
 
-    Collection<AbstractUser> getOnlinePlayers();
+    boolean canKick(AbstractClanUser toKick, AbstractClanUser from);
 
-    Set<ListenableFuture<AbstractUser>> getMembersAsFuture();
+    Collection<AbstractClanUser> getOnlinePlayers();
 
-    Set<ListenableFuture<AbstractUser>> getOnlineLeadersAsFuture();
+    Set<ListenableFuture<AbstractClanUser>> getMembersAsFuture();
+
+    Set<ListenableFuture<AbstractClanUser>> getOnlineLeadersAsFuture();
 
     UUID getClanId();
 
@@ -48,7 +51,7 @@ public interface AbstractClan {
 
     String getClanTag();
 
-    Map<UUID, Clan.Group> getMembers();
+    Map<UUID, AbstractClan.Group> getMembers();
 
     AbstractInfo getInfo();
 
@@ -65,9 +68,9 @@ public interface AbstractClan {
 
     enum Group {
 
-        LEADER(2, "Leader"),
-        MODERATOR(1, "Moderator"),
-        DEFAULT(0, "Mitglied");
+        LEADER(2, "clan-group-leader"),
+        MODERATOR(1, "clan-group-moderator"),
+        DEFAULT(0, "clan-group-default");
 
         @Getter
         private final int id;

@@ -71,11 +71,6 @@ public class MySQLConnector implements DatabaseConnector {
         }
     }
 
-    @Override
-    public Mongo getMongo() {
-        return null;
-    }
-
     @RequiredArgsConstructor
     static class MySQLImplementation implements MySQL {
 

@@ -11,19 +11,19 @@ import java.util.UUID;
  * @author Miles
  * @since 19.12.2022
  */
-public interface UserManager {
+public interface ClanUserManager {
 
     ListenableFuture<Boolean> createUser(UUID uuid, String name);
 
-    ListenableFuture<Boolean> setClan(AbstractUser user, UUID newClan);
+    ListenableFuture<Boolean> setClan(AbstractClanUser user, UUID newClan);
 
-    ListenableFuture<AbstractUser> getUser(UUID player);
+    ListenableFuture<AbstractClanUser> getUser(UUID player);
 
-    AbstractUser getOnlineUser(UUID player);
+    AbstractClanUser getOnlineUser(UUID player);
 
-    ListenableFuture<Boolean> updateLocale(AbstractUser user, Locale locale);
+    ListenableFuture<Boolean> updateLocale(AbstractClanUser user, Locale locale);
 
-    ListenableFuture<Boolean> cacheOnlineUser(AbstractUser user);
+    ListenableFuture<Boolean> cacheOnlineUser(AbstractClanUser user);
 
     ListenableFuture<Boolean> invalidateOnlineUser(UUID player);
 
@@ -31,9 +31,9 @@ public interface UserManager {
 
     ListenableFuture<UUID> getUUID(String name);
 
-    Map<UUID, AbstractUser> getOnlineUserCache();
+    Map<UUID, AbstractClanUser> getOnlineUserCache();
 
-    LoadingCache<UUID, ListenableFuture<AbstractUser>> getUserCache();
+    LoadingCache<UUID, ListenableFuture<AbstractClanUser>> getUserCache();
 
     LoadingCache<String, ListenableFuture<UUID>> getUuidCache();
 }

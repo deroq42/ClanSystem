@@ -10,26 +10,25 @@ import de.deroq.clans.config.MainConfig;
 import de.deroq.clans.config.MySQLConfig;
 import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.database.sql.MySQLConnector;
-import de.deroq.clans.invite.InviteManager;
-import de.deroq.clans.invite.InviteManagerImplementation;
+import de.deroq.clans.invite.ClanInviteManager;
+import de.deroq.clans.invite.ClanInviteManagerImplementation;
 import de.deroq.clans.invite.sql.ClanInviteRepositorySQLImplementation;
 import de.deroq.clans.language.LanguageManager;
 import de.deroq.clans.language.LanguageManagerImplementation;
-import de.deroq.clans.language.exception.LocaleLoadException;
 import de.deroq.clans.listener.LoginListener;
 import de.deroq.clans.listener.PlayerDisconnectListener;
 import de.deroq.clans.listener.ServerConnectListener;
 import de.deroq.clans.repository.ClanDataRepository;
 import de.deroq.clans.repository.ClanInviteRepository;
 import de.deroq.clans.repository.ClanRequestRepository;
-import de.deroq.clans.repository.UserRepository;
+import de.deroq.clans.repository.ClanUserRepository;
 import de.deroq.clans.repository.sql.ClanDataRepositorySQLImplementation;
-import de.deroq.clans.request.RequestManager;
-import de.deroq.clans.request.RequestManagerImplementation;
+import de.deroq.clans.request.ClanRequestManager;
+import de.deroq.clans.request.ClanRequestManagerImplementation;
 import de.deroq.clans.request.sql.ClanRequestRepositorySQLImplementation;
-import de.deroq.clans.user.UserManagerImplementation;
+import de.deroq.clans.user.ClanUserManagerImplementation;
 import de.deroq.clans.user.sql.UserRepositorySQLImplementation;
-import de.deroq.clans.user.UserManager;
+import de.deroq.clans.user.ClanUserManager;
 import lombok.Getter;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -58,28 +57,28 @@ public class ClanSystem extends Plugin {
     private DatabaseConnector databaseConnector;
 
     @Getter
-    private ClanDataRepository clanDataRepository;
+    private ClanDataRepository dataRepository;
 
     @Getter
     private ClanManager clanManager;
 
     @Getter
-    private UserRepository userRepository;
+    private ClanUserRepository userRepository;
 
     @Getter
-    private UserManager userManager;
+    private ClanUserManager userManager;
 
     @Getter
     private ClanInviteRepository clanInviteRepository;
 
     @Getter
-    private InviteManager inviteManager;
+    private ClanInviteManager inviteManager;
 
     @Getter
-    private ClanRequestRepository clanRequestRepository;
+    private ClanRequestRepository requestRepository;
 
     @Getter
-    private RequestManager requestManager;
+    private ClanRequestManager requestManager;
 
     @Getter
     private LanguageManager languageManager;
@@ -89,7 +88,6 @@ public class ClanSystem extends Plugin {
 
     public static final Pattern VALID_CLAN_NAMES = Pattern.compile("^[a-zA-Z0-9$&öäüÖÄÜ#+_\\-]{3,16}$");
     public static final Pattern VALID_CLAN_TAGS = Pattern.compile("^[a-zA-Z0-9$&öäüÖÄÜ#+_.,\\-]{2,5}$");
-    public static final String PREFIX = "§7[§cClans§7] ";
     public static int CLAN_PLAYER_LIMIT;
 
     @Override
@@ -146,21 +144,17 @@ public class ClanSystem extends Plugin {
     }
 
     private void makeInstances() {
-        this.clanDataRepository = new ClanDataRepositorySQLImplementation(this).createTables();
-        this.clanManager = new ClanManagerImplementation(this, clanDataRepository);
+        this.dataRepository = new ClanDataRepositorySQLImplementation(this).createTables();
+        this.clanManager = new ClanManagerImplementation(this, dataRepository);
         this.userRepository = new UserRepositorySQLImplementation(this).createTables();
-        this.userManager = new UserManagerImplementation(this, userRepository);
+        this.userManager = new ClanUserManagerImplementation(this, userRepository);
         this.clanInviteRepository = new ClanInviteRepositorySQLImplementation(this).createTables();
-        this.inviteManager = new InviteManagerImplementation(this, clanInviteRepository);
-        this.clanRequestRepository = new ClanRequestRepositorySQLImplementation(this).createTable();
-        this.requestManager = new RequestManagerImplementation(this, clanRequestRepository);
-        this.languageManager = new LanguageManagerImplementation(new File("plugins/ClanSystem/locales"), getLogger());
-        try {
-            languageManager.loadLocales(true);
-            languageManager.startRefreshing(this);
-        } catch (LocaleLoadException e) {
-            throw new RuntimeException(e);
-        }
+        this.inviteManager = new ClanInviteManagerImplementation(this, clanInviteRepository);
+        this.requestRepository = new ClanRequestRepositorySQLImplementation(this).createTable();
+        this.requestManager = new ClanRequestManagerImplementation(this, requestRepository);
+        this.languageManager = new LanguageManagerImplementation(this, new File("plugins/ClanSystem/locales"));
+        languageManager.loadLocales(true);
+        languageManager.startRefreshing();
     }
 
     private void registerListeners() {

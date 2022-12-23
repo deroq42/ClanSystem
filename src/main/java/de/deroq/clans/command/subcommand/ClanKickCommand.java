@@ -3,7 +3,7 @@ package de.deroq.clans.command.subcommand;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
 import de.deroq.clans.command.ClanSubCommand;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Callback;
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ public class ClanKickCommand extends ClanSubCommand {
     private final ClanSystem clanSystem;
 
     @Override
-    public void run(AbstractUser from, String[] args) {
+    public void run(AbstractClanUser from, String[] args) {
         if (args.length != 1) {
             sendHelp(from, 2);
             return;
@@ -40,7 +40,7 @@ public class ClanKickCommand extends ClanSubCommand {
                     from.sendMessage("user-not-found");
                     return;
                 }
-                ListenableFuture<AbstractUser> userFuture = clanSystem.getUserManager().getUser(uuid);
+                ListenableFuture<AbstractClanUser> userFuture = clanSystem.getUserManager().getUser(uuid);
                 Callback.of(userFuture, toKick -> {
                     if (toKick == null) {
                         from.sendMessage("user-not-found");

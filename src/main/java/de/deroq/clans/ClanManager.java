@@ -4,7 +4,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.model.Clan;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 
 import java.util.UUID;
 
@@ -14,19 +14,19 @@ import java.util.UUID;
  */
 public interface ClanManager {
 
-    ListenableFuture<AbstractClan> createClan(AbstractUser user, String clanName, String clanTag);
+    ListenableFuture<AbstractClan> createClan(AbstractClanUser user, String clanName, String clanTag);
 
     ListenableFuture<Boolean> deleteClan(AbstractClan clan);
 
-    ListenableFuture<Boolean> leaveClan(AbstractUser user, AbstractClan clan);
+    ListenableFuture<Boolean> leaveClan(AbstractClanUser user, AbstractClan clan);
 
     ListenableFuture<Boolean> renameClan(AbstractClan clan, String name, String tag);
 
-    ListenableFuture<Boolean> joinClan(AbstractUser user, AbstractClan clan);
+    ListenableFuture<Boolean> joinClan(AbstractClanUser user, AbstractClan clan);
 
-    ListenableFuture<Clan.Group> promoteUser(AbstractUser user, AbstractClan clan);
+    ListenableFuture<Clan.Group> promoteUser(AbstractClanUser user, AbstractClan clan);
 
-    ListenableFuture<Clan.Group> demoteUser(AbstractUser user, AbstractClan clan);
+    ListenableFuture<Clan.Group> demoteUser(AbstractClanUser user, AbstractClan clan);
 
     ListenableFuture<Boolean> isNameAvailable(String clanName);
 

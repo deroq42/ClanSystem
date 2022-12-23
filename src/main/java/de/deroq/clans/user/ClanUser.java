@@ -19,7 +19,7 @@ import java.util.UUID;
  * @since 10.12.2022
  */
 @AllArgsConstructor
-public class ClanUser implements AbstractUser {
+public class ClanUser implements AbstractClanUser {
 
     private final ClanSystem clanSystem;
 
@@ -61,7 +61,7 @@ public class ClanUser implements AbstractUser {
         if (clan == null) {
             return Futures.immediateFuture(null);
         }
-        return clanSystem.getClanDataRepository().getClanById(clan);
+        return clanSystem.getDataRepository().getClanById(clan);
     }
 
     @Override

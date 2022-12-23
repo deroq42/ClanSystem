@@ -3,8 +3,6 @@ package de.deroq.clans.language;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.language.exception.LocaleLoadException;
-import lombok.Getter;
 import net.md_5.bungee.api.ProxyServer;
 
 import java.io.*;
@@ -12,7 +10,7 @@ import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -21,24 +19,27 @@ import java.util.stream.Collectors;
  */
 public class LanguageManagerImplementation implements LanguageManager {
 
-    @Getter
+    private final ClanSystem clanSystem;
     private final File localesFolder;
-
-    private final Logger logger;
-
-    @Getter
     private final Set<Locale> loadedLocales = new HashSet<>();
-
-    @Getter
     private final Map<Locale, Map<String, String>> translations = new HashMap<>();
 
-    public LanguageManagerImplementation(File localesFolder, Logger logger) {
+    public LanguageManagerImplementation(ClanSystem clanSystem, File localesFolder) {
+        this.clanSystem = clanSystem;
         this.localesFolder = localesFolder;
-        this.logger = logger;
     }
 
     @Override
-    public synchronized ListenableFuture<Boolean> loadLocales(boolean log) throws LocaleLoadException {
+    public Set<Locale> findLocales() {
+        return Arrays.stream(Objects.requireNonNull(localesFolder.listFiles()))
+                .filter(file -> file.getName().endsWith(".properties"))
+                .map(this::getNameWithoutExtension)
+                .map(Locale::forLanguageTag)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public synchronized ListenableFuture<Boolean> loadLocales(boolean log) {
         if (!localesFolder.exists()) {
             localesFolder.mkdirs();
         }
@@ -46,22 +47,13 @@ public class LanguageManagerImplementation implements LanguageManager {
         if (files == null) {
             return Futures.immediateFuture(false);
         }
-        boolean translated = false;
-        for (File file : files) {
-            if (file.getName().endsWith(".properties")) {
-                String languageTag = file.getName().substring(0, file.getName().indexOf("."));
-                Locale locale = Locale.forLanguageTag(languageTag);
-                if (locale == null) {
-                    throw new LocaleLoadException("Error while loading Locale of language tag " + languageTag + ": Language tag could not be found.");
-                }
-                loadedLocales.add(locale);
-                if (log) {
-                    logger.info("Locale " + languageTag + " has been loaded.");
-                }
-                translated = translateLocale(locale, log);
-            }
-        }
-        return Futures.immediateFuture(translated);
+        AtomicBoolean translated = new AtomicBoolean(false);
+        findLocales().forEach(locale -> {
+            loadedLocales.add(locale);
+            clanSystem.getLogger().info("Locale " + locale.toLanguageTag() + " has been loaded.");
+            translated.set(translateLocale(locale, log));
+        });
+        return Futures.immediateFuture(translated.get());
     }
 
     @Override
@@ -69,17 +61,9 @@ public class LanguageManagerImplementation implements LanguageManager {
         try (InputStream inputStream = Files.newInputStream(new File(localesFolder.getPath(), locale.toLanguageTag() + ".properties").toPath())) {
             Properties properties = new Properties();
             properties.load(inputStream);
-            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                Map<String, String> map = translations.computeIfAbsent(locale, o -> new HashMap<>());
-                String translationKey = (String) entry.getKey();
-                String translation = (String) entry.getValue();
-                translation = translation
-                        .replace("%prefix%", properties.getProperty("prefix"))
-                        .replace('&', '§');
-                map.put(translationKey, translation);
-            }
+            translateMessages(properties, locale);
             if (log) {
-                logger.info("Translations of Locale " + locale.toLanguageTag() + " have been loaded.");
+                clanSystem.getLogger().info("Translations of Locale " + locale.toLanguageTag() + " have been loaded.");
             }
             return true;
         } catch (IOException e) {
@@ -100,7 +84,7 @@ public class LanguageManagerImplementation implements LanguageManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> startRefreshing(ClanSystem clanSystem) {
+    public ListenableFuture<Boolean> startRefreshing() {
         ProxyServer.getInstance().getScheduler().schedule(clanSystem, () -> ProxyServer.getInstance().getScheduler().runAsync(clanSystem, this::refresh), 5, TimeUnit.MINUTES);
         return Futures.immediateFuture(true);
     }
@@ -108,20 +92,16 @@ public class LanguageManagerImplementation implements LanguageManager {
     @Override
     public synchronized ListenableFuture<Boolean> refresh() {
         clearUp();
-        ListenableFuture<Boolean> future;
-        try {
-            future = loadLocales(false);
-        } catch (LocaleLoadException e) {
-            throw new RuntimeException(e);
-        }
-        logger.info("Locales have been refreshed.");
+        ListenableFuture<Boolean> future = loadLocales(false);
+        clanSystem.getLogger().info("Locales have been refreshed.");
         return future;
     }
 
     @Override
-    public synchronized void clearUp() {
+    public synchronized ListenableFuture<Boolean> clearUp() {
         loadedLocales.clear();
         translations.clear();
+        return Futures.immediateFuture(loadedLocales.size() == 0 && translations.size() == 0);
     }
 
     @Override
@@ -137,7 +117,23 @@ public class LanguageManagerImplementation implements LanguageManager {
     }
 
     @Override
-    public Map<String, String> getTranslations(Locale locale) {
-        return translations.get(locale);
+    public Set<Locale> getLoadedLocales() {
+        return loadedLocales;
+    }
+
+    private void translateMessages(Properties properties, Locale locale) {
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            Map<String, String> map = translations.computeIfAbsent(locale, o -> new HashMap<>());
+            String translationKey = (String) entry.getKey();
+            String translation = (String) entry.getValue();
+            translation = translation
+                    .replace("%prefix%", properties.getProperty("prefix"))
+                    .replace('&', '§');
+            map.put(translationKey, translation);
+        }
+    }
+
+    private String getNameWithoutExtension(File file) {
+        return file.getName().substring(0, file.getName().indexOf("."));
     }
 }

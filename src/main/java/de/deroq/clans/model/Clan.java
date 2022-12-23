@@ -2,11 +2,12 @@ package de.deroq.clans.model;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import lombok.Getter;
 import net.md_5.bungee.api.ProxyServer;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -53,13 +54,13 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public synchronized void leave(AbstractUser user) {
+    public synchronized void leave(AbstractClanUser user) {
         getMembers().remove(user.getUuid());
         getInfo().remove(user.getUuid());
     }
 
     @Override
-    public synchronized Clan.Group promote(AbstractUser user) {
+    public synchronized Clan.Group promote(AbstractClanUser user) {
         Clan.Group oldGroup = members.get(user.getUuid());
         Clan.Group newGroup = Clan.Group.getNextGroup(oldGroup);
         if (newGroup == null) {
@@ -71,7 +72,7 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public synchronized Clan.Group demote(AbstractUser user) {
+    public synchronized Clan.Group demote(AbstractClanUser user) {
         Clan.Group oldGroup = members.get(user.getUuid());
         Clan.Group newGroup = Clan.Group.getPreviousGroup(oldGroup);
         if (newGroup == null) {
@@ -83,7 +84,7 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public synchronized void chat(AbstractUser user, String message) {
+    public synchronized void chat(AbstractClanUser user, String message) {
         broadcast("clan-chat-format", user.getName(), message);
     }
 
@@ -96,12 +97,20 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public Clan.Group getGroup(AbstractUser user) {
+    public void broadcast(Consumer<AbstractClanUser> consumer) {
+        members.keySet()
+                .stream()
+                .map(uuid -> clanSystem.getUserManager().getOnlineUser(uuid))
+                .forEach(consumer);
+    }
+
+    @Override
+    public Clan.Group getGroup(AbstractClanUser user) {
         return members.get(user.getUuid());
     }
 
     @Override
-    public boolean isLeader(AbstractUser user) {
+    public boolean isLeader(AbstractClanUser user) {
         if (!members.containsKey(user.getUuid())) {
             return false;
         }
@@ -109,7 +118,7 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public boolean isDefault(AbstractUser user) {
+    public boolean isDefault(AbstractClanUser user) {
         if (!members.containsKey(user.getUuid())) {
             return false;
         }
@@ -117,17 +126,17 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public boolean containsUser(AbstractUser user) {
+    public boolean containsUser(AbstractClanUser user) {
         return members.containsKey(user.getUuid());
     }
 
     @Override
-    public boolean canKick(AbstractUser toKick, AbstractUser from) {
+    public boolean canKick(AbstractClanUser toKick, AbstractClanUser from) {
         return getGroup(toKick).getId() < getGroup(from).getId();
     }
 
     @Override
-    public Collection<AbstractUser> getOnlinePlayers() {
+    public Collection<AbstractClanUser> getOnlinePlayers() {
         return members.keySet()
                 .stream()
                 .filter(uuid -> ProxyServer.getInstance().getPlayer(uuid) != null)
@@ -136,15 +145,15 @@ public class Clan implements AbstractClan {
     }
 
     @Override
-    public Set<ListenableFuture<AbstractUser>> getMembersAsFuture() {
-        Set<ListenableFuture<AbstractUser>> users = new HashSet<>();
+    public Set<ListenableFuture<AbstractClanUser>> getMembersAsFuture() {
+        Set<ListenableFuture<AbstractClanUser>> users = new HashSet<>();
         members.keySet().forEach(uuid -> users.add(clanSystem.getUserManager().getUser(uuid)));
         return users;
     }
 
     @Override
-    public Set<ListenableFuture<AbstractUser>> getOnlineLeadersAsFuture() {
-        Set<ListenableFuture<AbstractUser>> users = new HashSet<>();
+    public Set<ListenableFuture<AbstractClanUser>> getOnlineLeadersAsFuture() {
+        Set<ListenableFuture<AbstractClanUser>> users = new HashSet<>();
         members.entrySet()
                 .stream()
                 .filter(uuidGroupEntry -> uuidGroupEntry.getValue() == Group.LEADER)

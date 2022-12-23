@@ -12,7 +12,7 @@ import java.util.UUID;
  * @author Miles
  * @since 12.12.2022
  */
-public interface AbstractUser {
+public interface AbstractClanUser {
 
     void sendMessage(String translationKey, Object... objects);
 

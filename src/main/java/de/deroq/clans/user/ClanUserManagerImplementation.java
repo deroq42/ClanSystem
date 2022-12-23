@@ -6,7 +6,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import de.deroq.clans.ClanSystem;
-import de.deroq.clans.repository.UserRepository;
+import de.deroq.clans.repository.ClanUserRepository;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -21,20 +21,20 @@ import java.util.concurrent.TimeUnit;
  * @since 10.12.2022
  */
 @RequiredArgsConstructor
-public class UserManagerImplementation implements UserManager {
+public class ClanUserManagerImplementation implements ClanUserManager {
 
     private final ClanSystem clanSystem;
-    private final UserRepository repository;
+    private final ClanUserRepository repository;
 
     @Getter
-    private final Map<UUID, AbstractUser> onlineUserCache = new ConcurrentHashMap<>();
+    private final Map<UUID, AbstractClanUser> onlineUserCache = new ConcurrentHashMap<>();
 
     @Getter
-    private final LoadingCache<UUID, ListenableFuture<AbstractUser>> userCache = CacheBuilder.newBuilder()
+    private final LoadingCache<UUID, ListenableFuture<AbstractClanUser>> userCache = CacheBuilder.newBuilder()
             .expireAfterAccess(5, TimeUnit.MINUTES)
-            .build(new CacheLoader<UUID, ListenableFuture<AbstractUser>>() {
+            .build(new CacheLoader<UUID, ListenableFuture<AbstractClanUser>>() {
                 @Override
-                public ListenableFuture<AbstractUser> load(UUID uuid) {
+                public ListenableFuture<AbstractClanUser> load(UUID uuid) {
                     return repository.getUser(uuid);
                 }
             });
@@ -58,14 +58,14 @@ public class UserManagerImplementation implements UserManager {
     }
 
     @Override
-    public ListenableFuture<Boolean> setClan(AbstractUser user, UUID newClan) {
+    public ListenableFuture<Boolean> setClan(AbstractClanUser user, UUID newClan) {
         user.setClan(newClan);
         userCache.put(user.getUuid(), Futures.immediateFuture(user));
         return repository.setClan(user.getUuid(), newClan);
     }
 
     @Override
-    public ListenableFuture<AbstractUser> getUser(UUID player) {
+    public ListenableFuture<AbstractClanUser> getUser(UUID player) {
         if (onlineUserCache.containsKey(player)) {
             return Futures.immediateFuture(onlineUserCache.get(player));
         }
@@ -73,18 +73,18 @@ public class UserManagerImplementation implements UserManager {
     }
 
     @Override
-    public AbstractUser getOnlineUser(UUID player) {
+    public AbstractClanUser getOnlineUser(UUID player) {
         return onlineUserCache.get(player);
     }
 
     @Override
-    public ListenableFuture<Boolean> updateLocale(AbstractUser user, Locale locale) {
+    public ListenableFuture<Boolean> updateLocale(AbstractClanUser user, Locale locale) {
         user.setLocale(locale);
         return repository.updateLocale(user, locale);
     }
 
     @Override
-    public ListenableFuture<Boolean> cacheOnlineUser(AbstractUser user) {
+    public ListenableFuture<Boolean> cacheOnlineUser(AbstractClanUser user) {
         onlineUserCache.put(user.getUuid(), user);
         return Futures.immediateFuture(true);
     }

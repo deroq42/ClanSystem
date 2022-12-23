@@ -6,7 +6,7 @@ import de.deroq.clans.ClanSystem;
 import de.deroq.clans.database.DatabaseConnector;
 import de.deroq.clans.model.AbstractClan;
 import de.deroq.clans.repository.ClanRequestRepository;
-import de.deroq.clans.user.AbstractUser;
+import de.deroq.clans.user.AbstractClanUser;
 import de.deroq.clans.util.Executors;
 
 import java.sql.ResultSet;
@@ -26,7 +26,6 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
     private final String insertRequest;
     private final String deleteRequest;
     private final String selectRequestsByClan;
-    private final String deleteRequests;
 
     public ClanRequestRepositorySQLImplementation(ClanSystem clanSystem) {
         this.mySQL = clanSystem.getDatabaseConnector().getMySQL();
@@ -34,7 +33,6 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
         this.insertRequest = "INSERT INTO clan_requests(clan, player) VALUES (?, ?)";
         this.deleteRequest = "DELETE FROM clan_requests WHERE clan = ? AND player = ?";
         this.selectRequestsByClan = "SELECT player FROM clan_requests WHERE clan = ?";
-        this.deleteRequests = "DELETE FROM clan_requests WHERE clan = ?";
     }
 
     public ClanRequestRepository createTable() {
@@ -43,7 +41,7 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
     }
 
     @Override
-    public ListenableFuture<Boolean> insertRequest(AbstractClan clan, AbstractUser user) {
+    public ListenableFuture<Boolean> insertRequest(AbstractClan clan, AbstractClanUser user) {
         return mySQL.update(
                 insertRequest,
                 clan.getClanId().toString(), user.getUuid().toString()
@@ -51,18 +49,10 @@ public class ClanRequestRepositorySQLImplementation implements ClanRequestReposi
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRequest(AbstractClan clan, AbstractUser user) {
+    public ListenableFuture<Boolean> deleteRequest(AbstractClan clan, AbstractClanUser user) {
         return mySQL.update(
                 deleteRequest,
                 clan.getClanId().toString(), user.getUuid().toString()
-        );
-    }
-
-    @Override
-    public ListenableFuture<Boolean> deleteRequests(AbstractClan clan) {
-        return mySQL.update(
-                deleteRequests,
-                clan.getClanId().toString()
         );
     }
 

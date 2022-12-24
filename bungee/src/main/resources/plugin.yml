@@ -1,0 +1,7 @@
+name: ClanSystem
+version: 1.0
+author: deroq
+main: de.deroq.clans.bungee.ClanSystem
+commands:
+  clan:
+  cc:

@@ -23,13 +23,13 @@
 .idea/
 target/
 dependency-reduced-pom.xml
-developer-api/target/
-developer-api/developer-api.iml
-bungee/target/
-bungee/bungee.iml
-bukkit/target/
-bukkit/bukkit.iml
-bukkit/dependency-reduced-pom.xml
+/developer-api/target/
+/developer-api/developer-api.iml
+/bungee/target/
+/bungee/bungee.iml
+/bukkit/target/
+/bukkit/bukkit.iml
+/bukkit/dependency-reduced-pom.xml
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
